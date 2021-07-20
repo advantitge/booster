@@ -1,4 +1,3 @@
-import * as cors from 'cors'
 import * as express from 'express'
 import { GraphQLService } from '@boostercloud/framework-provider-local'
 import { BoosterConfig, UserApp } from '@boostercloud/framework-types'
@@ -41,7 +40,6 @@ export const Infrastructure = {
     const userProject: UserApp = require(path.join(process.cwd(), 'dist', 'index.js'))
     const graphQLService = new GraphQLService(userProject)
     router.use('/graphql', new GraphQLController(graphQLService).router)
-    expressServer.use(cors())
     expressServer.use(express.json())
     expressServer.use(cors())
     expressServer.use(function (req, res, next) {
