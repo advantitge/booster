@@ -5,6 +5,7 @@ import { BoosterConfig, UserApp } from '@boostercloud/framework-types'
 import * as path from 'path'
 import { requestFailed } from './http'
 import { GraphQLController } from './controllers/graphql'
+import * as cors from 'cors'
 
 export * from './test-helper/local-test-helper'
 
@@ -42,6 +43,12 @@ export const Infrastructure = {
     router.use('/graphql', new GraphQLController(graphQLService).router)
     expressServer.use(cors())
     expressServer.use(express.json())
+    expressServer.use(cors())
+    expressServer.use(function (req, res, next) {
+      res.header('Access-Control-Allow-Origin', '*')
+      res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept')
+      next()
+    })
     expressServer.use(router)
     expressServer.use(defaultErrorHandler)
     expressServer.listen(port)
