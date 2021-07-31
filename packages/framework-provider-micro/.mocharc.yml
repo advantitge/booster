@@ -1,7 +1,9 @@
 diff: true
-require: 'ts-node/register'
+require:
+    - 'ts-node/register'
+    - './test/fixtures.ts'
 extension:
-  - ts
+    - ts
 package: './package.json'
 recursive: true
 reporter: 'spec'
