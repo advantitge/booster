@@ -4,10 +4,11 @@ import {
   Logger,
   ReadModelEnvelope,
   ReadModelInterface,
+  ReadModelListResult,
   UUID,
 } from '@boostercloud/framework-types'
 
-import { getCollection } from '../db'
+import { getCollection } from '../services/db'
 import { queryRecordFor } from './searcher-adapter'
 
 export async function rawReadModelEventsToEnvelopes(
@@ -25,32 +26,28 @@ export async function fetchReadModel(
   readModelID: UUID
 ): Promise<ReadModelInterface> {
   const collection = await getCollection(config.resourceNames.forReadModel(readModelName))
-  const readModel = await collection.findOne({ _id: readModelID, typeName: readModelName })
+  const readModel = (await collection.findOne({ _id: readModelID })) as ReadModelInterface
   if (!readModel) {
     logger.debug(`[ReadModelAdapter#fetchReadModel] Read model ${readModelName} with ID ${readModelID} not found`)
   } else {
     logger.debug(
       `[ReadModelAdapter#fetchReadModel] Loaded read model ${readModelName} with ID ${readModelID} with result:`,
-      readModel.value
+      readModel
     )
   }
-  return readModel?.value
+  return readModel
 }
 
 export async function storeReadModel(
   config: BoosterConfig,
   logger: Logger,
   readModelName: string,
-  readModel: ReadModelInterface,
+  { id: _id, ...readModel }: ReadModelInterface,
   _expectedCurrentVersion: number
 ): Promise<void> {
   const collection = await getCollection(config.resourceNames.forReadModel(readModelName))
   logger.debug('[ReadModelAdapter#storeReadModel] Storing readModel ' + JSON.stringify(readModel))
-  await collection.replaceOne(
-    { _id: readModel.id, typeName: readModelName },
-    { typeName: readModelName, value: readModel },
-    { upsert: true }
-  )
+  await collection.replaceOne({ _id }, { _id, ...readModel }, { upsert: true })
   logger.debug('[ReadModelAdapter#storeReadModel] Read model stored')
 }
 
@@ -58,17 +55,35 @@ export async function searchReadModel(
   config: BoosterConfig,
   logger: Logger,
   readModelName: string,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  filters: FilterFor<any>
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-): Promise<Array<any>> {
+  filters: FilterFor<unknown>,
+  limit?: number,
+  afterCursor?: { index: number },
+  paginatedVersion = false
+): Promise<Array<any> | ReadModelListResult> {
   const collection = await getCollection(config.resourceNames.forReadModel(readModelName))
   logger.debug('Converting filter to query')
   const query = queryRecordFor(readModelName, filters)
   logger.debug('Got query ', query)
-  const result = await collection.find(query).toArray<ReadModelEnvelope>()
+  const result = await collection
+    .aggregate([
+      { $match: query },
+      { $skip: afterCursor?.index || 0 },
+      { $limit: limit || 100 },
+      { $addFields: { id: '$_id' } },
+      { $project: { _id: 0 } },
+    ])
+    .toArray<ReadModelEnvelope>()
   logger.debug('[ReadModelAdapter#searchReadModel] Search result: ', result)
-  return result.map((envelope) => envelope.value)
+  if (paginatedVersion) {
+    const count = await collection.count(query)
+    return {
+      items: result,
+      count,
+      cursor: { index: ((afterCursor?.index || 0) + result.length) as any },
+    }
+  } else {
+    return result
+  }
 }
 
 export async function deleteReadModel(
@@ -79,6 +94,6 @@ export async function deleteReadModel(
 ): Promise<void> {
   const collection = await getCollection(config.resourceNames.forReadModel(readModelName))
   logger.debug('[ReadModelAdapter#deleteReadModel] Deleting readModel ' + JSON.stringify(readModel))
-  await collection.deleteOne({ _id: readModel.id, typeName: readModelName })
+  await collection.deleteOne({ _id: readModel.id })
   logger.debug('[ReadModelAdapter#deleteReadModel] Read model deleted')
 }

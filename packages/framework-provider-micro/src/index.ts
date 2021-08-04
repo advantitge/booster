@@ -7,7 +7,7 @@ import {
 } from '@boostercloud/framework-core'
 import { ProviderLibrary } from '@boostercloud/framework-types'
 
-import { createRequestHandler, Infrastructure } from './infrastructure'
+import { Infrastructure } from './infrastructure/infrastructure'
 import { requestFailed, requestSucceeded } from './library/api-adapter'
 import {
   rawEventsToEnvelopes,
@@ -23,6 +23,7 @@ import {
   storeReadModel,
   deleteReadModel,
 } from './library/read-model-adapter'
+import { createRequestHandler } from './services/request-handler'
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 // const userApp: UserApp = require(path.join(process.cwd(), 'dist', 'index.js'))
