@@ -2,12 +2,12 @@ import {
   BoosterConfig,
   FilterFor,
   Logger,
-  OptimisticConcurrencyUnexpectedVersionError,
   ReadModelEnvelope,
   ReadModelInterface,
   UUID,
 } from '@boostercloud/framework-types'
-import { Registry } from '../registry'
+
+import { getCollection } from '../db'
 import { queryRecordFor } from './searcher-adapter'
 
 export async function rawReadModelEventsToEnvelopes(
@@ -19,63 +19,66 @@ export async function rawReadModelEventsToEnvelopes(
 }
 
 export async function fetchReadModel(
-  db: Registry<ReadModelEnvelope>,
-  _config: BoosterConfig,
+  config: BoosterConfig,
   logger: Logger,
   readModelName: string,
   readModelID: UUID
 ): Promise<ReadModelInterface> {
-  //use dot notation value.id to match the record (see https://github.com/louischatriot/nedb#finding-documents)
-  const response = await db.query({ typeName: readModelName, 'value.id': readModelID })
-  const item = response[0]
-  if (!item) {
+  const collection = await getCollection(config.resourceNames.forReadModel(readModelName))
+  const readModel = await collection.findOne({ _id: readModelID, typeName: readModelName })
+  if (!readModel) {
     logger.debug(`[ReadModelAdapter#fetchReadModel] Read model ${readModelName} with ID ${readModelID} not found`)
   } else {
     logger.debug(
       `[ReadModelAdapter#fetchReadModel] Loaded read model ${readModelName} with ID ${readModelID} with result:`,
-      item.value
+      readModel.value
     )
   }
-  return item?.value
+  return readModel?.value
 }
 
 export async function storeReadModel(
-  db: Registry<ReadModelEnvelope>,
-  _config: BoosterConfig,
+  config: BoosterConfig,
   logger: Logger,
   readModelName: string,
   readModel: ReadModelInterface,
-  expectedCurrentVersion: number
+  _expectedCurrentVersion: number
 ): Promise<void> {
+  const collection = await getCollection(config.resourceNames.forReadModel(readModelName))
   logger.debug('[ReadModelAdapter#storeReadModel] Storing readModel ' + JSON.stringify(readModel))
-  try {
-    await db.upsert(
-      { typeName: readModelName, 'value.id': readModel.id },
-      { typeName: readModelName, value: readModel }
-    )
-  } catch (e) {
-    // The error will be thrown, but in case of a conditional check, we throw the expected error type by the core
-    // TODO: verify the name of the exception thrown in Local Provider
-    if (e.name == 'TODO') {
-      throw new OptimisticConcurrencyUnexpectedVersionError(e.message)
-    }
-    throw e
-  }
+  await collection.replaceOne(
+    { _id: readModel.id, typeName: readModelName },
+    { typeName: readModelName, value: readModel },
+    { upsert: true }
+  )
   logger.debug('[ReadModelAdapter#storeReadModel] Read model stored')
 }
 
 export async function searchReadModel(
-  db: Registry<ReadModelEnvelope>,
-  _config: BoosterConfig,
+  config: BoosterConfig,
   logger: Logger,
   readModelName: string,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   filters: FilterFor<any>
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): Promise<Array<any>> {
+  const collection = await getCollection(config.resourceNames.forReadModel(readModelName))
   logger.debug('Converting filter to query')
   const query = queryRecordFor(readModelName, filters)
   logger.debug('Got query ', query)
-  const result = await db.query(query)
+  const result = await collection.find(query).toArray<ReadModelEnvelope>()
   logger.debug('[ReadModelAdapter#searchReadModel] Search result: ', result)
-  return result?.map((envelope) => envelope.value) ?? []
+  return result.map((envelope) => envelope.value)
+}
+
+export async function deleteReadModel(
+  config: BoosterConfig,
+  logger: Logger,
+  readModelName: string,
+  readModel: ReadModelInterface
+): Promise<void> {
+  const collection = await getCollection(config.resourceNames.forReadModel(readModelName))
+  logger.debug('[ReadModelAdapter#deleteReadModel] Deleting readModel ' + JSON.stringify(readModel))
+  await collection.deleteOne({ _id: readModel.id, typeName: readModelName })
+  logger.debug('[ReadModelAdapter#deleteReadModel] Read model deleted')
 }

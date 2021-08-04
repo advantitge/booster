@@ -1,45 +1,57 @@
-import { EventEnvelope, ProviderLibrary, ReadModelEnvelope, UserApp } from '@boostercloud/framework-types'
+import {
+  Booster,
+  boosterEventDispatcher,
+  boosterNotifySubscribers,
+  boosterServeGraphQL,
+  boosterTriggerScheduledCommand,
+} from '@boostercloud/framework-core'
+import { ProviderLibrary } from '@boostercloud/framework-types'
+
+import { createRequestHandler, Infrastructure } from './infrastructure'
+import { requestFailed, requestSucceeded } from './library/api-adapter'
 import {
   rawEventsToEnvelopes,
   readEntityEventsSince,
   readEntityLatestSnapshot,
   storeEvents,
 } from './library/events-adapter'
-import { requestSucceeded, requestFailed } from './library/api-adapter'
 import { rawGraphQLRequestToEnvelope } from './library/graphql-adapter'
-
-import * as path from 'path'
 import {
   fetchReadModel,
   rawReadModelEventsToEnvelopes,
   searchReadModel,
   storeReadModel,
+  deleteReadModel,
 } from './library/read-model-adapter'
-import { Infrastructure } from './infrastructure'
-import { Registry } from './registry'
 
-const url = 'mongodb://localhost:27017/booster'
-const eventRegistry = new Registry<EventEnvelope>(process.env.DB_URL_EVENTS || url, 'events')
-const readModelRegistry = new Registry<ReadModelEnvelope>(process.env.DB_URL_READMODELS || url, 'read_models')
-const userApp: UserApp = require(path.join(process.cwd(), 'dist', 'index.js'))
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+// const userApp: UserApp = require(path.join(process.cwd(), 'dist', 'index.js'))
+const userApp = {
+  Booster,
+  boosterEventDispatcher,
+  boosterServeGraphQL,
+  boosterNotifySubscribers,
+  boosterTriggerScheduledCommand,
+} as any
+export const handleRequest = createRequestHandler(userApp)
 
 export const Provider = (): ProviderLibrary => ({
   // ProviderEventsLibrary
   events: {
     rawToEnvelopes: rawEventsToEnvelopes,
-    forEntitySince: readEntityEventsSince.bind(null, eventRegistry),
-    latestEntitySnapshot: readEntityLatestSnapshot.bind(null, eventRegistry),
-    store: storeEvents.bind(null, userApp, eventRegistry),
+    forEntitySince: readEntityEventsSince,
+    latestEntitySnapshot: readEntityLatestSnapshot,
+    store: storeEvents.bind(null, userApp),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     search: undefined as any,
   },
   // ProviderReadModelsLibrary
   readModels: {
     rawToEnvelopes: rawReadModelEventsToEnvelopes,
-    fetch: fetchReadModel.bind(null, readModelRegistry),
-    search: searchReadModel.bind(null, readModelRegistry),
-    store: storeReadModel.bind(null, readModelRegistry),
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    delete: undefined as any,
+    fetch: fetchReadModel,
+    search: searchReadModel,
+    store: storeReadModel,
+    delete: deleteReadModel,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     subscribe: undefined as any,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -75,7 +87,8 @@ export const Provider = (): ProviderLibrary => ({
     rawToEnvelope: undefined as any,
   },
   // ProviderInfrastructureGetter
-  infrastructure: () => Infrastructure(userApp),
+  infrastructure: () => Infrastructure(handleRequest),
 })
 
+// eslint-disable-next-line @typescript-eslint/no-empty-function
 function notImplemented(): void {}
