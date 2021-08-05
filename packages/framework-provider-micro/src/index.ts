@@ -15,6 +15,7 @@ import {
   readEntityLatestSnapshot,
   storeEvents,
 } from './library/events-adapter'
+import { searchEvents } from './library/events-searcher-adapter'
 import { rawGraphQLRequestToEnvelope } from './library/graphql-adapter'
 import {
   fetchReadModel,
@@ -43,8 +44,7 @@ export const Provider = (): ProviderLibrary => ({
     forEntitySince: readEntityEventsSince,
     latestEntitySnapshot: readEntityLatestSnapshot,
     store: storeEvents.bind(null, userApp),
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    search: undefined as any,
+    search: searchEvents,
   },
   // ProviderReadModelsLibrary
   readModels: {
