@@ -18,7 +18,7 @@ export async function readEntityEventsSince(
     entityTypeName: entityTypeName,
     kind: 'event' as const,
     createdAt: {
-      $gt: since || new Date(0).toISOString(),
+      $gt: since ? new Date(since) : new Date(0),
     },
   }
   const collection = await getCollection(config.resourceNames.eventsStore)
@@ -68,7 +68,7 @@ export async function storeEvents(
 ): Promise<void> {
   const collection = await getCollection(config.resourceNames.eventsStore)
   logger.debug('[EventsAdapter#storeEvents] Storing the following event envelopes:', eventEnvelopes)
-  await collection.insertMany(eventEnvelopes)
+  await collection.insertMany(eventEnvelopes.map((e) => ({ ...e, createdAt: new Date(e.createdAt) })))
   logger.debug('[EventsAdapter#storeEvents] EventEnvelopes stored')
 
   await userApp.boosterEventDispatcher(eventEnvelopes)
