@@ -1,5 +1,5 @@
 import { GraphQLJSONObject } from 'graphql-type-json'
-import { GraphQLNonInputType, TargetTypeMetadata, TargetTypesMap } from './common'
+import { DateScalar, GraphQLNonInputType, TargetTypeMetadata, TargetTypesMap } from './common'
 import { AnyClass, UUID } from '@boostercloud/framework-types'
 import {
   GraphQLFieldConfigMap,
@@ -81,6 +81,7 @@ export class GraphQLTypeInformer {
 
   public getGraphQLTypeFor(type: AnyClass): GraphQLNonInputType {
     if (type === UUID) return GraphQLID
+    if (type === Date) return DateScalar
     const primitiveType = this.getOriginalAncestor(type)
     switch (primitiveType) {
       case String:
