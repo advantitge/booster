@@ -30,7 +30,7 @@ export function queryRecordFor(
           if (!Object.keys(queryOperatorTable).includes(Object.keys(filter)[0])) {
             return queryRecordFor(readModelName, filter, propName)
           } else {
-            queryFromFilters[key === 'id' ? '_id' : key] = filterToQuery(filter) as FilterFor<QueryValue>
+            queryFromFilters[propName === 'id' ? '_id' : propName] = filterToQuery(filter) as FilterFor<QueryValue>
           }
           break
       }
