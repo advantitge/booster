@@ -5,6 +5,8 @@ import {
   ReadModelEnvelope,
   ReadModelInterface,
   ReadModelListResult,
+  ReadOnlyNonEmptyArray,
+  SequenceKey,
   UUID,
 } from '@boostercloud/framework-types'
 
@@ -23,8 +25,12 @@ export async function fetchReadModel(
   config: BoosterConfig,
   logger: Logger,
   readModelName: string,
-  readModelID: UUID
-): Promise<ReadModelInterface> {
+  readModelID: UUID,
+  sequenceKey?: SequenceKey
+): Promise<ReadOnlyNonEmptyArray<ReadModelInterface>> {
+  if (sequenceKey) {
+    logger.info('sequencedBy not implemented for framework-provider-micro!')
+  }
   const collection = await getCollection(config.resourceNames.forReadModel(readModelName))
   const readModel = (await collection.findOne({ _id: readModelID })) as ReadModelInterface
   if (!readModel) {
@@ -35,7 +41,7 @@ export async function fetchReadModel(
       readModel
     )
   }
-  return readModel
+  return [readModel]
 }
 
 export async function storeReadModel(
@@ -59,7 +65,7 @@ export async function searchReadModel(
   limit?: number,
   afterCursor?: { index: number },
   paginatedVersion = false
-): Promise<Array<any> | ReadModelListResult> {
+): Promise<Array<any> | ReadModelListResult<any>> {
   const collection = await getCollection(config.resourceNames.forReadModel(readModelName))
   logger.debug('Converting filter to query')
   const query = queryRecordFor(readModelName, filters)
