@@ -7,12 +7,12 @@ import {
   ReadModelInterface,
 } from '@boostercloud/framework-types'
 
-export const applyReadModelRequestBeforeFunctions = (
+export const applyReadModelRequestBeforeFunctions = async (
   readModelRequestEnvelope: ReadModelRequestEnvelope<ReadModelInterface>,
   beforeHooks: Array<ReadModelBeforeFunction>
 ): ReadModelRequestEnvelope<ReadModelInterface> => {
   return beforeHooks.reduce(
-    (currentReadModelRequestEnvelope, beforeFunction) => beforeFunction(currentReadModelRequestEnvelope),
+    async (currentReadModelRequestEnvelope, beforeFunction) => beforeFunction(await currentReadModelRequestEnvelope),
     readModelRequestEnvelope
   )
 }
@@ -22,8 +22,5 @@ export const applyBeforeFunctions = async (
   beforeHooks: Array<CommandBeforeFunction>,
   currentUser?: UserEnvelope
 ): Promise<CommandInput> => {
-  return beforeHooks.reduce(async (currentInputPromise, before) => {
-    const currentInput = await currentInputPromise
-    return Promise.resolve(before(currentInput, currentUser))
-  }, Promise.resolve(commandInput))
+  return beforeHooks.reduce(async (currentInput, before) => before(await currentInput, currentUser), commandInput)
 }

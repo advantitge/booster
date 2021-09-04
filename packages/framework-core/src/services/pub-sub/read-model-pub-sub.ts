@@ -14,19 +14,19 @@ export interface ReadModelPubSub<TReadModel extends ReadModelInterface> {
   asyncIterator(
     readModelRequestEnvelope: ReadModelRequestEnvelope<TReadModel>,
     config: BoosterConfig
-  ): AsyncIterator<ReadModelInterface>
+  ): AsyncIterator<ReadModelInterface> | Promise<AsyncIterator<ReadModelInterface>>
 }
 
 export class FilteredReadModelPubSub<TReadModel extends ReadModelInterface> implements ReadModelPubSub<TReadModel> {
   constructor(private readModels: Array<ReadModelInterface & Instance>) {}
 
-  public asyncIterator(
+  public async asyncIterator(
     readModelRequestEnvelope: ReadModelRequestEnvelope<TReadModel>,
     config: BoosterConfig
-  ): AsyncIterator<ReadModelInterface> {
+  ): Promise<AsyncIterator<ReadModelInterface>> {
     const readModelMetadata = config.readModels[readModelRequestEnvelope.class.name]
 
-    const newReadModelRequestEnvelope = applyReadModelRequestBeforeFunctions(
+    const newReadModelRequestEnvelope = await applyReadModelRequestBeforeFunctions(
       readModelRequestEnvelope,
       readModelMetadata.before
     )
