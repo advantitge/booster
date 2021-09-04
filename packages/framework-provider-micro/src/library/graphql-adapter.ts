@@ -1,6 +1,7 @@
 import { GraphQLRequestEnvelope, GraphQLRequestEnvelopeError, Logger, UUID } from '@boostercloud/framework-types'
 import { IncomingMessage } from 'http'
 import { json } from 'micro'
+import { parse } from 'cookie'
 
 export async function rawGraphQLRequestToEnvelope(
   request: IncomingMessage,
@@ -17,7 +18,7 @@ export async function rawGraphQLRequestToEnvelope(
       requestID,
       eventType,
       connectionID,
-      token: request.headers.authorization,
+      token: request.headers.cookie && parse(request.headers.cookie)['session-token'],
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       value: body as any,
     }
