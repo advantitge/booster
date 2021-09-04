@@ -27,7 +27,7 @@ export async function fetchReadModel(
   readModelName: string,
   readModelID: UUID,
   sequenceKey?: SequenceKey
-): Promise<ReadOnlyNonEmptyArray<ReadModelInterface | null>> {
+): Promise<ReadOnlyNonEmptyArray<ReadModelInterface>> {
   if (sequenceKey) {
     logger.info('sequencedBy not implemented for framework-provider-micro!')
   }
