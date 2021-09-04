@@ -27,7 +27,7 @@ export async function fetchReadModel(
   readModelName: string,
   readModelID: UUID,
   sequenceKey?: SequenceKey
-): Promise<ReadOnlyNonEmptyArray<ReadModelInterface>> {
+): Promise<ReadOnlyNonEmptyArray<ReadModelInterface | null>> {
   if (sequenceKey) {
     logger.info('sequencedBy not implemented for framework-provider-micro!')
   }
@@ -35,13 +35,15 @@ export async function fetchReadModel(
   const readModel = (await collection.findOne({ _id: readModelID })) as ReadModelInterface
   if (!readModel) {
     logger.debug(`[ReadModelAdapter#fetchReadModel] Read model ${readModelName} with ID ${readModelID} not found`)
+    return [] as any // TODO: cannot return empty array or array with undefined/null..?
   } else {
     logger.debug(
       `[ReadModelAdapter#fetchReadModel] Loaded read model ${readModelName} with ID ${readModelID} with result:`,
       readModel
     )
+    const { _id, ...readModelWithoutId } = readModel
+    return [{ ...readModelWithoutId, id: _id }]
   }
-  return [readModel]
 }
 
 export async function storeReadModel(
