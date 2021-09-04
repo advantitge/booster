@@ -33,9 +33,9 @@
     "url": "https://github.com/boostercloud/booster/issues"
   },
   "dependencies": {
-    "@boostercloud/framework-common-helpers": "^0.20.5",
-    "@boostercloud/framework-core": "^0.20.5",
-    "@boostercloud/framework-types": "^0.20.5",
+    "@boostercloud/framework-common-helpers": "0.21.1",
+    "@boostercloud/framework-core": "0.21.1",
+    "@boostercloud/framework-types": "0.21.1",
     "cookie": "0.4.1",
     "micro": "9.3.4",
     "micro-cors": "0.1.1",
