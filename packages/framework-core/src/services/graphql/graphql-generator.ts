@@ -37,14 +37,11 @@ export class GraphQLGenerator {
       this.readModelsReader = new BoosterReadModelsReader(config, logger)
       this.eventsReader = new BoosterEventsReader(config, logger)
 
-      const typeInformer = new GraphQLTypeInformer({
-        ...config.readModels,
-        ...config.commandHandlers,
-      })
+      const typeInformer = new GraphQLTypeInformer()
 
       const queryGenerator = new GraphQLQueryGenerator(
         config,
-        config.readModels,
+        Object.values(config.readModels).map((m) => m.class),
         typeInformer,
         this.readModelByIDResolverBuilder.bind(this, config),
         this.readModelResolverBuilder.bind(this),
@@ -52,13 +49,13 @@ export class GraphQLGenerator {
       )
 
       const mutationGenerator = new GraphQLMutationGenerator(
-        config.commandHandlers,
+        config.commandHandlers as any /* TODO: remove casting once new metadata-booster types are merged */,
         typeInformer,
         this.commandResolverBuilder.bind(this)
       )
 
       const subscriptionGenerator = new GraphQLSubscriptionGenerator(
-        config.readModels,
+        config.readModels as any /* TODO: remove casting once new metadata-booster types are merged */,
         typeInformer,
         queryGenerator,
         this.subscriptionByIDResolverBuilder.bind(this, config),

@@ -1,147 +1,142 @@
-import { GraphQLJSONObject } from 'graphql-type-json'
-import { DateScalar, GraphQLNonInputType, TargetTypeMetadata, TargetTypesMap } from './common'
-import { AnyClass, UUID } from '@boostercloud/framework-types'
+import { UUID } from '@boostercloud/framework-types'
+
+import { getPropertiesMetadata } from './../../decorators/metadata'
 import {
-  GraphQLFieldConfigMap,
-  GraphQLList,
-  GraphQLObjectType,
   GraphQLBoolean,
+  GraphQLEnumType,
   GraphQLFloat,
   GraphQLID,
-  GraphQLString,
-  GraphQLInputType,
-  GraphQLScalarType,
   GraphQLInputObjectType,
-  GraphQLOutputType,
+  GraphQLInputType,
+  GraphQLList,
   GraphQLNonNull,
-  GraphQLEnumType,
-  GraphQLInterfaceType,
+  GraphQLObjectType,
+  GraphQLOutputType,
+  GraphQLString,
 } from 'graphql'
-import { GraphQLFieldMap, GraphQLInputFieldConfigMap } from 'graphql/type/definition'
-import { PropertyMetadata } from 'metadata-booster'
-import { getPropertiesMetadata } from './../../decorators/metadata'
-
+import { GraphQLJSONObject } from 'graphql-type-json'
+import { AnyType } from 'metadata-booster'
+import { TypeGroup, TypeMetadata } from '../../metadata-types'
+import { DateScalar } from './common'
 export class GraphQLTypeInformer {
-  private graphQLTypesByName: Record<string, GraphQLNonInputType> = {}
-
-  public constructor(private readonly typesByName: TargetTypesMap) {
-    for (const name in this.typesByName) {
-      this.generateGraphQLTypeFromMetadata(this.typesByName[name])
-    }
+  private graphQLTypesByName: { input: Record<string, GraphQLInputType>; output: Record<string, GraphQLOutputType> } = {
+    input: {},
+    output: {},
   }
 
-  public generateGraphQLTypeFromMetadata(typeMetadata: TargetTypeMetadata): void {
-    const name = typeMetadata.class.name
-    if (!this.graphQLTypesByName[name]) {
-      this.graphQLTypesByName[name] = new GraphQLObjectType({
-        name: typeMetadata.class.name,
-        fields: () => this.metadataPropertiesToGraphQLFields(typeMetadata.properties),
-      })
-    }
-  }
-
-  private metadataPropertiesToGraphQLFields(properties: Array<PropertyMetadata>): GraphQLFieldConfigMap<any, any> {
-    const fields: GraphQLFieldConfigMap<any, any> = {}
-    for (const prop of properties) {
-      const primitiveType = this.getOriginalAncestor(prop.typeInfo.type)
-
-      if (primitiveType === Array) {
-        const param = prop.typeInfo.parameters[0]
-        let graphQLPropType = this.getGraphQLTypeFor(param.type)
-
-        if (!this.isGraphQLScalarType(graphQLPropType) && param.type) {
-          const properties = getPropertiesMetadata(param.type)
-          this.generateGraphQLTypeFromMetadata({ class: param.type, properties })
-          graphQLPropType = this.getGraphQLTypeFor(param.type)
-        }
-
-        fields[prop.name] = {
-          type: GraphQLList(new GraphQLNonNull(graphQLPropType)),
-        }
+  public generateGraphQLTypeForClass(type: AnyType, inputOutputType: 'input'): GraphQLInputType
+  public generateGraphQLTypeForClass(type: AnyType, inputOutputType: 'output'): GraphQLOutputType
+  public generateGraphQLTypeForClass(
+    type: AnyType,
+    inputOutputType: 'input' | 'output'
+  ): GraphQLInputType | GraphQLOutputType
+  public generateGraphQLTypeForClass(
+    type: AnyType,
+    inputOutputType: 'input' | 'output'
+  ): GraphQLInputType | GraphQLOutputType {
+    const name = type.name
+    if (this.graphQLTypesByName[inputOutputType][name]) return this.graphQLTypesByName[inputOutputType][name]
+    const properties = getPropertiesMetadata(type)
+    if (!this.graphQLTypesByName[inputOutputType][name]) {
+      const propName = name + (inputOutputType === 'input' ? 'Input' : '')
+      if (inputOutputType === 'input') {
+        this.graphQLTypesByName['input'][name] = new GraphQLInputObjectType({
+          name,
+          fields: () =>
+            properties.reduce(
+              (obj, prop) => ({ ...obj, [propName]: { type: this.getGraphQLTypeFor(prop.typeInfo, 'input') } }),
+              {}
+            ),
+        })
       } else {
-        let graphQLPropType = this.getGraphQLTypeFor(prop.typeInfo.type);
-        if (!this.isGraphQLScalarType(graphQLPropType) && prop.typeInfo.type) {
-          const properties = getPropertiesMetadata(prop.typeInfo.type);
-          this.generateGraphQLTypeFromMetadata({ class: prop.typeInfo.type, properties });
-        }
-        fields[prop.name] = { type: this.getGraphQLTypeFor(prop.typeInfo.type) }
+        this.graphQLTypesByName['output'][name] = new GraphQLObjectType({
+          name,
+          fields: () =>
+            properties.reduce(
+              (obj, prop) => ({ ...obj, [propName]: { type: this.getGraphQLTypeFor(prop.typeInfo, 'output') } }),
+              {}
+            ),
+        })
       }
     }
-    return fields
+    return this.graphQLTypesByName[inputOutputType][name]
   }
 
-  public isGraphQLScalarType(graphQLType: GraphQLNonInputType): boolean {
-    return graphQLType instanceof GraphQLScalarType && graphQLType != GraphQLJSONObject
+  public getGraphQLTypeFor(typeMetadata: TypeMetadata, inputOutputType: 'input'): GraphQLInputType
+  public getGraphQLTypeFor(typeMetadata: TypeMetadata, inputOutputType: 'output'): GraphQLOutputType
+  public getGraphQLTypeFor(
+    typeMetadata: TypeMetadata,
+    inputOutputType: 'input' | 'output'
+  ): GraphQLInputType | GraphQLOutputType {
+    const graphQLType = this.getNullableGraphQLTypeFor(typeMetadata, inputOutputType)
+    return typeMetadata.isNullable ? graphQLType : new GraphQLNonNull(graphQLType)
   }
 
-  public getOriginalAncestor(type: AnyClass): AnyClass {
-    if (!type) return type
-
-    const typePrototype = Object.getPrototypeOf(type)
-    if (typePrototype === Function.prototype) {
-      return type // End of the prototype chain, return the type
-    }
-    return this.getOriginalAncestor(typePrototype)
-  }
-
-  public getGraphQLTypeFor(type: AnyClass): GraphQLNonInputType {
+  public getNullableGraphQLTypeFor(
+    { type, typeGroup, ...typeMetadata }: TypeMetadata,
+    inputOutputType: 'input' | 'output'
+  ): GraphQLInputType | GraphQLOutputType {
     if (type === UUID) return GraphQLID
     if (type === Date) return DateScalar
-    const primitiveType = this.getOriginalAncestor(type)
-    switch (primitiveType) {
-      case String:
-        return GraphQLString
-      case Number:
-        return GraphQLFloat
-      case Boolean:
-        return GraphQLBoolean
-      case undefined:
-        return GraphQLJSONObject
-      default:
-        if (this.graphQLTypesByName[type.name]) {
-          return this.graphQLTypesByName[type.name]
-        }
-        if (this.typesByName[type.name]) {
-          this.generateGraphQLTypeFromMetadata(this.typesByName[type.name])
-          return this.graphQLTypesByName[type.name]
-        }
-        return GraphQLJSONObject
-    }
-  }
-
-  public getGraphQLInputTypeFor(type: AnyClass): GraphQLInputType {
-    return this.toInputType(this.getGraphQLTypeFor(type))
-  }
-
-  public toInputType(graphQLType: GraphQLOutputType): GraphQLInputType {
-    if (graphQLType instanceof GraphQLScalarType || graphQLType instanceof GraphQLEnumType) {
-      return graphQLType
-    }
-    if (graphQLType instanceof GraphQLList) {
-      return new GraphQLList(this.toInputType(graphQLType.ofType))
-    }
-    if (graphQLType instanceof GraphQLNonNull) {
-      return new GraphQLNonNull(this.toInputType(graphQLType.ofType))
-    }
-    if (graphQLType instanceof GraphQLObjectType) {
-      return new GraphQLInputObjectType({
-        name: `${graphQLType.name}Input`,
-        fields: () => this.toInputFields(graphQLType.getFields()),
+    if (typeGroup === TypeGroup.String) return GraphQLString
+    if (typeGroup === TypeGroup.Number) return GraphQLFloat
+    if (typeGroup === TypeGroup.Boolean) return GraphQLBoolean
+    if (typeGroup === TypeGroup.Enum)
+      return new GraphQLEnumType({
+        name: typeMetadata.name,
+        values: typeMetadata.parameters.reduce((obj, el) => ({ ...obj, [el.name]: {} }), {}),
       })
+    if (typeGroup === TypeGroup.Array) {
+      const param = typeMetadata.parameters[0]
+      const graphQLPropType = this.getNullableGraphQLTypeFor(param, inputOutputType)
+      return GraphQLList(new GraphQLNonNull(graphQLPropType))
+
+      /*
+          const properties = getPropertiesMetadata(param.type)
+          this.generateGraphQLTypeFromMetadata({ class: param.type, properties })
+          graphQLPropType = this.getGraphQLTypeFor(param)
+      */
     }
-    throw new Error(
-      `Types '${GraphQLEnumType.name}' and '${GraphQLInterfaceType}' are not allowed as input type, ` +
-        `and '${graphQLType.name}' was found`
-    )
+    if (this.graphQLTypesByName[inputOutputType][type.name]) {
+      return this.graphQLTypesByName[inputOutputType][type.name]
+    }
+    if (typeGroup === TypeGroup.Class) {
+      return this.generateGraphQLTypeForClass(type, inputOutputType)
+    }
+    return GraphQLJSONObject
   }
 
-  private toInputFields(fields: GraphQLFieldMap<any, any>): GraphQLInputFieldConfigMap {
-    const inputFields: GraphQLInputFieldConfigMap = {}
-    for (const fieldName in fields) {
-      inputFields[fieldName] = {
-        type: this.toInputType(fields[fieldName].type),
-      }
-    }
-    return inputFields
-  }
+  // public isGraphQLScalarType(graphQLType: GraphQLOutputType): boolean {
+  //   return graphQLType instanceof GraphQLScalarType && graphQLType != GraphQLJSONObject
+  // }
+
+  // public getGraphQLInputTypeFor(typeMetadata: TypeMetadata): GraphQLInputType {
+  //   return this.toInputType(this.getGraphQLTypeFor(typeMetadata))
+  // }
+
+  // public toInputType(graphQLType: GraphQLOutputType): GraphQLInputType {
+  //   if (graphQLType instanceof GraphQLScalarType || graphQLType instanceof GraphQLEnumType) {
+  //     return graphQLType
+  //   }
+  //   if (graphQLType instanceof GraphQLList) {
+  //     return new GraphQLList(this.toInputType(graphQLType.ofType))
+  //   }
+  //   if (graphQLType instanceof GraphQLNonNull) {
+  //     return new GraphQLNonNull(this.toInputType(graphQLType.ofType))
+  //   }
+  //   if (graphQLType instanceof GraphQLObjectType) {
+  //     return new GraphQLInputObjectType({
+  //       name: `${graphQLType.name}Input`,
+  //       fields: () =>
+  //         Object.entries(graphQLType.getFields()).reduce(
+  //           (obj, [fieldName, value]) => ({ ...obj, [fieldName]: this.toInputType(value.type) }),
+  //           {}
+  //         ),
+  //     })
+  //   }
+  //   throw new Error(
+  //     `Types '${GraphQLEnumType.name}' and '${GraphQLInterfaceType}' are not allowed as input type, ` +
+  //       `and '${graphQLType.name}' was found`
+  //   )
+  // }
 }
