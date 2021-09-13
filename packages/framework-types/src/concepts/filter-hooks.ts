@@ -18,4 +18,4 @@ export interface ReadModelFilterHooks<TReadModel extends ReadModelInterface = Re
 export type ReadModelBeforeFunction<TReadModel extends ReadModelInterface = ReadModelInterface> = (
   readModelRequestEnvelope: ReadModelRequestEnvelope<TReadModel>,
   currentUser?: UserEnvelope
-) => ReadModelRequestEnvelope<TReadModel> | Promise<ReadModelRequestEnvelope<ReadModelInterface>>
+) => ReadModelRequestEnvelope<TReadModel> | Promise<ReadModelRequestEnvelope<TReadModel>>
