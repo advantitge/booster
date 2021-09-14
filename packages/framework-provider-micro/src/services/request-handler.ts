@@ -11,16 +11,20 @@ export const createRequestHandler = (userApp: UserApp): RequestHandler => {
       await send(res, 200, 'OK')
       return
     }
+    if (req.url === '/' && req.method === 'GET') {
+      await send(res, 200, '')
+      return
+    }
     try {
       const response = await userApp.boosterServeGraphQL(req)
       await send(res, 200, response.result)
     } catch (e) {
       const statusCode = httpStatusCodeFor(e)
+      if (statusCode === 500) console.error(e)
       await send(res, statusCode, {
         title: toClassTitle(e),
         reason: e.message,
       })
-      throw e
     }
   })
 }
