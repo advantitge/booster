@@ -2,7 +2,7 @@ import { GraphQLScalarType } from 'graphql/type/definition'
 import { AnyClass, UserEnvelope, UUID, GraphQLOperation, ReadModelInterface } from '@boostercloud/framework-types'
 import { GraphQLFieldResolver, Kind } from 'graphql'
 import { ReadModelPubSub } from '../pub-sub/read-model-pub-sub'
-import { PropertyMetadata } from '../../metadata-types'
+import { PropertyMetadata, TypeMetadata } from '../../metadata-types'
 
 export type TargetTypesMap = Record<string, TargetTypeMetadata>
 export interface TargetTypeMetadata {
@@ -42,3 +42,7 @@ export const DateScalar = new GraphQLScalarType({
     return null
   },
 })
+
+export function isExternalType(typeMetadata: Pick<TypeMetadata, 'importPath'>): boolean {
+  return !!typeMetadata.importPath && !typeMetadata.importPath.startsWith('.')
+}

@@ -1,4 +1,4 @@
-import { AnyClass, BoosterConfig } from '@boostercloud/framework-types'
+import { AnyClass, BoosterConfig, UUID } from '@boostercloud/framework-types'
 import {
   GraphQLBoolean,
   GraphQLEnumType,
@@ -24,7 +24,7 @@ import { GraphQLJSONObject } from 'graphql-type-json'
 import * as inflected from 'inflected'
 import { PropertyMetadata, TypeGroup, TypeMetadata } from '../../metadata-types'
 import { getPropertiesMetadata } from './../../decorators/metadata'
-import { DateScalar, GraphQLResolverContext, ResolverBuilder } from './common'
+import { DateScalar, GraphQLResolverContext, isExternalType, ResolverBuilder } from './common'
 import { GraphQLTypeInformer } from './graphql-type-informer'
 
 export class GraphQLQueryGenerator {
@@ -95,7 +95,7 @@ export class GraphQLQueryGenerator {
     for (const readModel of this.readModels) {
       const graphQLType = this.typeInformer.generateGraphQLTypeForClass(readModel, 'output')
       queries[inflected.pluralize(readModel.name)] = {
-        type: new GraphQLList(graphQLType),
+        type: new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(graphQLType))),
         args: this.generateFilterQueriesFields(readModel.name, readModel),
         resolve: this.filterResolverBuilder(readModel),
       }
@@ -108,14 +108,16 @@ export class GraphQLQueryGenerator {
     for (const readModel of this.readModels) {
       const graphQLType = this.typeInformer.generateGraphQLTypeForClass(readModel, 'output')
       queries[`List${inflected.pluralize(readModel.name)}`] = {
-        type: new GraphQLObjectType({
-          name: `${readModel.name}Connection`,
-          fields: {
-            items: { type: new GraphQLList(graphQLType) },
-            count: { type: GraphQLInt },
-            cursor: { type: GraphQLJSONObject },
-          },
-        }),
+        type: new GraphQLNonNull(
+          new GraphQLObjectType({
+            name: `${readModel.name}Connection`,
+            fields: {
+              items: { type: new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(graphQLType))) },
+              count: { type: GraphQLInt },
+              cursor: { type: GraphQLJSONObject },
+            },
+          })
+        ),
         args: this.generateListedQueriesFields(readModel),
         resolve: this.filterResolverBuilder(readModel),
       }
@@ -222,14 +224,17 @@ export class GraphQLQueryGenerator {
   }
 
   private generateFilterFor(prop: PropertyMetadata): GraphQLInputObjectType | GraphQLScalarType {
-    const filterName = `${prop.typeInfo.name}PropertyFilter`
+    if (!prop.typeInfo.type || prop.typeInfo.type.name === 'Object') return GraphQLJSONObject
 
-    if (!prop.typeInfo.type || typeof prop.typeInfo.type === 'object') return GraphQLJSONObject
+    let filterName = `${prop.typeInfo.name}PropertyFilter`
+    filterName = filterName.charAt(0).toUpperCase() + filterName.substr(1)
+
     if (this.generatedFiltersByTypeName[filterName]) return this.generatedFiltersByTypeName[filterName]
     if (prop.typeInfo.typeGroup === TypeGroup.Array) return this.generateArrayFilterFor(prop)
     let fields: Thunk<GraphQLInputFieldConfigMap> = {}
 
-    if (prop.typeInfo.typeGroup === TypeGroup.Class) {
+    if (prop.typeInfo.typeGroup === TypeGroup.Class && prop.typeInfo.name !== 'UUID') {
+      if (isExternalType(prop.typeInfo)) return GraphQLJSONObject
       let nestedProperties: GraphQLInputFieldConfigMap = {}
       const properties = getPropertiesMetadata(prop.typeInfo.type)
       if (properties.length === 0) return GraphQLJSONObject
@@ -254,7 +259,8 @@ export class GraphQLQueryGenerator {
   }
 
   private generateArrayFilterFor(property: PropertyMetadata): GraphQLInputObjectType {
-    const filterName = `${property.name}PropertyFilter`
+    let filterName = `${property.typeInfo.parameters[0].name}ArrayPropertyFilter`
+    filterName = filterName.charAt(0).toUpperCase() + filterName.substr(1)
 
     if (!this.generatedFiltersByTypeName[filterName]) {
       const propFilters: GraphQLInputFieldConfigMap = {}
@@ -313,6 +319,11 @@ export class GraphQLQueryGenerator {
         beginsWith: { type: GraphQLString },
         contains: { type: GraphQLString },
       }
+    if (type === UUID)
+      return {
+        eq: { type: GraphQLID },
+        ne: { type: GraphQLID },
+      }
     if (type === Date)
       return {
         eq: { type: DateScalar },
@@ -324,7 +335,7 @@ export class GraphQLQueryGenerator {
         in: { type: GraphQLList(DateScalar) },
       }
 
-    throw new Error(`Type ${type.name} is not supported in search filters`)
+    throw new Error(`Type ${type?.name} is not supported in search filters`)
   }
 
   private buildGraphqlSimpleEnumFor(enumName: string, values: Array<string>): GraphQLEnumType {

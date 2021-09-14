@@ -33,6 +33,7 @@ export class GraphQLGenerator {
 
   public static generateSchema(config: BoosterConfig, logger: Logger): GraphQLSchema {
     if (!this.schema) {
+      logger.debug('Generating GraphQL schema...')
       this.commandsDispatcher = new BoosterCommandDispatcher(config, logger)
       this.readModelsReader = new BoosterReadModelsReader(config, logger)
       this.eventsReader = new BoosterEventsReader(config, logger)
@@ -55,7 +56,7 @@ export class GraphQLGenerator {
       )
 
       const subscriptionGenerator = new GraphQLSubscriptionGenerator(
-        config.readModels as any /* TODO: remove casting once new metadata-booster types are merged */,
+        Object.values(config.readModels).map((m) => m.class),
         typeInformer,
         queryGenerator,
         this.subscriptionByIDResolverBuilder.bind(this, config),
@@ -67,6 +68,7 @@ export class GraphQLGenerator {
         mutation: mutationGenerator.generate(),
         subscription: subscriptionGenerator.generate(),
       })
+      logger.debug('GraphQL schema generated')
     }
     return this.schema
   }

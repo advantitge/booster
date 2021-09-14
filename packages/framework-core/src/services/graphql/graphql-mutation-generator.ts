@@ -1,7 +1,7 @@
 import { ResolverBuilder, TargetTypesMap } from './common'
 import { GraphQLTypeInformer } from './graphql-type-informer'
 import { GraphQLFieldConfigMap, GraphQLObjectType, GraphQLNonNull } from 'graphql'
-import { TypeGroup } from 'framework-core/src/metadata-types'
+import { TypeGroup } from '../../metadata-types'
 
 export class GraphQLMutationGenerator {
   public constructor(
@@ -27,11 +27,10 @@ export class GraphQLMutationGenerator {
       const type = this.targetTypes[name]
       mutations[name] = {
         type: this.typeInformer.getGraphQLTypeFor(
-          // TODO: proper output type
           {
             name,
             type: type.returnClass || Boolean,
-            typeGroup: type.returnClass ? TypeGroup.Other : TypeGroup.Boolean,
+            typeGroup: type.returnClass && type.returnClass !== Boolean ? TypeGroup.Class : TypeGroup.Boolean,
             parameters: [],
             isNullable: false,
           },
