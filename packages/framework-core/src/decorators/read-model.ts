@@ -18,7 +18,7 @@ export function ReadModel(
 
       config.readModels[readModelClass.name] = {
         class: readModelClass,
-        properties: getPropertiesMetadata(readModelClass),
+        properties: getPropertiesMetadata(readModelClass) as any, // TODO: remove once metadata-booster is updated
         authorizedRoles: attributes.authorize,
         before: attributes.before ?? [],
       }

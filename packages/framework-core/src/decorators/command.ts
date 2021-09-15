@@ -24,7 +24,7 @@ export function Command(
         class: commandClass,
         authorizedRoles: attributes.authorize,
         before: attributes.before ?? [],
-        properties: getPropertiesMetadata(commandClass),
+        properties: getPropertiesMetadata(commandClass) as any, // TODO: remove once metadata-booster is updated
         returnClass,
       }
     })

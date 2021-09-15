@@ -1,5 +1,5 @@
 import { AnyClass } from '@boostercloud/framework-types'
-import { ClassMetadata, PropertyMetadata } from 'metadata-booster'
+import { ClassMetadata, PropertyMetadata } from '../metadata-types'
 import 'reflect-metadata'
 
 export function getPropertiesMetadata(classType: AnyClass): Array<PropertyMetadata> {
