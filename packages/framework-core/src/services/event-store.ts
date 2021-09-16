@@ -106,7 +106,11 @@ export class EventStore {
       const eventInstance = createInstance(eventMetadata.class, eventEnvelope.value)
       const entityMetadata = this.config.entities[eventEnvelope.entityTypeName]
       const snapshotInstance = latestSnapshot ? createInstance(entityMetadata.class, latestSnapshot.value) : null
-      const newEntity = this.reducerForEvent(eventEnvelope.typeName)(eventInstance, snapshotInstance)
+      const newEntity = this.reducerForEvent(eventEnvelope.typeName)(
+        eventInstance,
+        snapshotInstance,
+        eventEnvelope.createdAt
+      )
       const newSnapshot: EventEnvelope = {
         version: this.config.currentVersionFor(eventEnvelope.entityTypeName),
         kind: 'snapshot',
