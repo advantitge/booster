@@ -23,7 +23,7 @@ export interface CommandMetadata<TCommand = unknown> {
   // Class to unknown.
   readonly class: CommandInterface<TCommand>
   readonly properties: Array<PropertyMetadata>
+  readonly methods: Array<PropertyMetadata>
   readonly authorizedRoles: RoleAccess['authorize']
   readonly before: NonNullable<CommandFilterHooks['before']>
-  readonly returnClass: AnyClass
 }

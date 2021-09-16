@@ -23,7 +23,7 @@ import {
 import { GraphQLJSONObject } from 'graphql-type-json'
 import * as inflected from 'inflected'
 import { PropertyMetadata, TypeGroup, TypeMetadata } from '../../metadata-types'
-import { getPropertiesMetadata } from './../../decorators/metadata'
+import { getClassMetadata } from './../../decorators/metadata'
 import { DateScalar, GraphQLResolverContext, isExternalType, ResolverBuilder } from './common'
 import { GraphQLTypeInformer } from './graphql-type-informer'
 
@@ -65,7 +65,7 @@ export class GraphQLQueryGenerator {
   }
 
   private generateByIdQuery(readModel: AnyClass): GraphQLFieldConfig<unknown, GraphQLResolverContext> {
-    const graphQLType = this.typeInformer.generateGraphQLTypeForClass(readModel, 'output')
+    const graphQLType = this.typeInformer.generateGraphQLTypeForClass(readModel)
     return {
       type: graphQLType,
       args: {
@@ -79,7 +79,7 @@ export class GraphQLQueryGenerator {
     readModel: AnyClass,
     sequenceKeyName: string
   ): GraphQLFieldConfig<unknown, GraphQLResolverContext> {
-    const graphQLType = this.typeInformer.generateGraphQLTypeForClass(readModel, 'output')
+    const graphQLType = this.typeInformer.generateGraphQLTypeForClass(readModel)
     return {
       type: new GraphQLList(graphQLType),
       args: {
@@ -93,7 +93,7 @@ export class GraphQLQueryGenerator {
   private generateFilterQueries(): GraphQLFieldConfigMap<unknown, GraphQLResolverContext> {
     const queries: GraphQLFieldConfigMap<unknown, GraphQLResolverContext> = {}
     for (const readModel of this.readModels) {
-      const graphQLType = this.typeInformer.generateGraphQLTypeForClass(readModel, 'output')
+      const graphQLType = this.typeInformer.generateGraphQLTypeForClass(readModel)
       queries[inflected.pluralize(readModel.name)] = {
         type: new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(graphQLType))),
         args: this.generateFilterQueriesFields(readModel.name, readModel),
@@ -106,7 +106,7 @@ export class GraphQLQueryGenerator {
   private generateListedQueries(): GraphQLFieldConfigMap<unknown, GraphQLResolverContext> {
     const queries: GraphQLFieldConfigMap<unknown, GraphQLResolverContext> = {}
     for (const readModel of this.readModels) {
-      const graphQLType = this.typeInformer.generateGraphQLTypeForClass(readModel, 'output')
+      const graphQLType = this.typeInformer.generateGraphQLTypeForClass(readModel)
       queries[`List${inflected.pluralize(readModel.name)}`] = {
         type: new GraphQLNonNull(
           new GraphQLObjectType({
@@ -213,9 +213,9 @@ export class GraphQLQueryGenerator {
   }
 
   public generateFilterArguments(type: AnyClass): GraphQLFieldConfigArgumentMap {
-    const properties = getPropertiesMetadata(type)
+    const metadata = getClassMetadata(type)
     const args: GraphQLFieldConfigArgumentMap = {}
-    properties.forEach((prop: PropertyMetadata) => {
+    metadata.fields.forEach((prop: PropertyMetadata) => {
       args[prop.name] = {
         type: this.generateFilterFor(prop),
       }
@@ -236,12 +236,12 @@ export class GraphQLQueryGenerator {
     if (prop.typeInfo.typeGroup === TypeGroup.Class && prop.typeInfo.name !== 'UUID') {
       if (isExternalType(prop.typeInfo)) return GraphQLJSONObject
       let nestedProperties: GraphQLInputFieldConfigMap = {}
-      const properties = getPropertiesMetadata(prop.typeInfo.type)
-      if (properties.length === 0) return GraphQLJSONObject
+      const metadata = getClassMetadata(prop.typeInfo.type)
+      if (metadata.fields.length === 0) return GraphQLJSONObject
 
-      this.typeInformer.generateGraphQLTypeForClass(prop.typeInfo.type, 'input')
+      this.typeInformer.generateGraphQLTypeForClass(prop.typeInfo.type, true)
 
-      for (const prop of properties) {
+      for (const prop of metadata.fields) {
         const property = { [prop.name]: { type: this.generateFilterFor(prop) } }
         nestedProperties = { ...nestedProperties, ...property }
       }
@@ -291,7 +291,8 @@ export class GraphQLQueryGenerator {
     return this.generatedFiltersByTypeName[filterName]
   }
 
-  private generateFilterInputTypes({ type, typeGroup }: TypeMetadata): GraphQLInputFieldConfigMap {
+  private generateFilterInputTypes(typeMetadata: TypeMetadata): GraphQLInputFieldConfigMap {
+    const { type, typeGroup } = typeMetadata
     if (typeGroup === TypeGroup.Boolean)
       return {
         eq: { type: GraphQLBoolean },
@@ -334,6 +335,13 @@ export class GraphQLQueryGenerator {
         gt: { type: DateScalar },
         in: { type: GraphQLList(DateScalar) },
       }
+    if (typeGroup === TypeGroup.Enum) {
+      const EnumType = this.typeInformer.getOrCreateGraphQLType(typeMetadata, true)
+      return {
+        eq: { type: EnumType },
+        ne: { type: EnumType },
+      }
+    }
 
     throw new Error(`Type ${type?.name} is not supported in search filters`)
   }

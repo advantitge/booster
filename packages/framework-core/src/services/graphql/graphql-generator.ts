@@ -38,7 +38,7 @@ export class GraphQLGenerator {
       this.readModelsReader = new BoosterReadModelsReader(config, logger)
       this.eventsReader = new BoosterEventsReader(config, logger)
 
-      const typeInformer = new GraphQLTypeInformer()
+      const typeInformer = new GraphQLTypeInformer(logger)
 
       const queryGenerator = new GraphQLQueryGenerator(
         config,
