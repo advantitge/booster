@@ -1,5 +1,5 @@
 import { Register } from './register'
-import { AnyClass, Class } from '../typelevel'
+import { Class } from '../typelevel'
 import { RoleAccess } from './role'
 import { PropertyMetadata } from 'metadata-booster'
 import { CommandFilterHooks } from './filter-hooks'
