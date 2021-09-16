@@ -8,7 +8,7 @@ export type TargetTypesMap = Record<string, TargetTypeMetadata>
 export interface TargetTypeMetadata {
   class: AnyClass
   properties: Array<PropertyMetadata>
-  returnClass?: AnyClass
+  methods: Array<PropertyMetadata>
 }
 
 export type ResolverBuilder = (objectClass: AnyClass) => GraphQLFieldResolver<unknown, GraphQLResolverContext, any>
