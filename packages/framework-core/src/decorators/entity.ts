@@ -94,5 +94,6 @@ function registerReducer(eventName: string, reducerMetadata: ReducerMetadata): v
 
 type ReducerMethod<TEvent, TEntity> =
   | TypedPropertyDescriptor<(event: TEvent) => TEntity>
+  | TypedPropertyDescriptor<(event: TEvent, entity: TEntity) => TEntity>
   | TypedPropertyDescriptor<(event: TEvent, entity: TEntity, eventTime: Date) => TEntity>
   | TypedPropertyDescriptor<(event: TEvent, entity: TEntity | undefined, eventTime: Date) => TEntity>
