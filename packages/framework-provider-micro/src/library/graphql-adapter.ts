@@ -18,7 +18,7 @@ export async function rawGraphQLRequestToEnvelope(
       requestID,
       eventType,
       connectionID,
-      token: request.headers.cookie && parse(request.headers.cookie)['session-token'],
+      token: getAuthorizationToken(request),
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       value: body as any,
     }
@@ -30,4 +30,10 @@ export async function rawGraphQLRequestToEnvelope(
       eventType,
     }
   }
+}
+
+function getAuthorizationToken(request: IncomingMessage): string | undefined {
+  const cookieToken = request.headers.cookie && parse(request.headers.cookie)['session-token']
+  if (cookieToken) return cookieToken
+  return request.headers.authorization
 }
