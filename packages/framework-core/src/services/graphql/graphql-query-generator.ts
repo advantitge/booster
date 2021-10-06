@@ -277,7 +277,7 @@ export class GraphQLQueryGenerator {
             graphqlType = GraphQLFloat
             break
           default:
-            graphqlType = GraphQLJSONObject
+            graphqlType = param.type === UUID ? GraphQLID : GraphQLJSONObject
             break
         }
         propFilters.includes = { type: graphqlType }
@@ -324,6 +324,7 @@ export class GraphQLQueryGenerator {
       return {
         eq: { type: GraphQLID },
         ne: { type: GraphQLID },
+        in: { type: GraphQLList(GraphQLID) },
       }
     if (type === Date)
       return {
