@@ -23,9 +23,9 @@ export function Command(
         class: commandClass,
         authorizedRoles: attributes.authorize,
         before: attributes.before ?? [],
-        properties: metadata.fields as any, // TODO: remove once metadata-booster is updated
-        methods: metadata.methods as any,
-      }
+        properties: metadata.fields,
+        methods: metadata.methods,
+      } as any // TODO: remove cast after package framework-types is updated
     })
   }
 }
