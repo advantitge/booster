@@ -109,7 +109,7 @@ export class EventStore {
       const newEntity = this.reducerForEvent(eventEnvelope.typeName)(
         eventInstance,
         snapshotInstance,
-        eventEnvelope.createdAt
+        new Date(eventEnvelope.createdAt)
       )
       const newSnapshot: EventEnvelope = {
         version: this.config.currentVersionFor(eventEnvelope.entityTypeName),
