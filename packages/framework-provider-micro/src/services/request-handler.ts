@@ -7,13 +7,17 @@ import { boosterServeGraphQL } from '@boostercloud/framework-core'
 
 const cors = createCors()
 
+function responseToHtml(text: string): string {
+  return `<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body>${text}</body></html>`
+}
+
 export const requestHandler = cors(async (req: IncomingMessage, res: ServerResponse): Promise<void> => {
   switch (req.method) {
     case 'OPTIONS':
-      await send(res, 200, '🆗')
+      await send(res, 200, responseToHtml('🆗'))
       break
     case 'GET':
-      req.url === '/' ? await send(res, 200, '🚀') : await send(res, 404, 'Not found')
+      req.url === '/' ? await send(res, 200, responseToHtml('🚀')) : await send(res, 404, 'Not found')
       break
     case 'POST':
       try {
@@ -28,6 +32,6 @@ export const requestHandler = cors(async (req: IncomingMessage, res: ServerRespo
       }
       break
     default:
-      await send(res, 405, '🚫')
+      await send(res, 405, responseToHtml('🚫'))
   }
 })

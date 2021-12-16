@@ -1,6 +1,6 @@
 {
   "name": "@advantitge/booster-framework-provider-micro",
-  "version": "0.1.12",
+  "version": "0.1.13",
   "description": "Run Booster with Micro and MongoDB. Can be used to link the Booster API as a Next.js API route.",
   "keywords": [
     "framework-provider-micro"
