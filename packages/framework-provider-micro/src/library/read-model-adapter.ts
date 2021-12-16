@@ -14,8 +14,8 @@ import { getCollection } from '../services/db'
 import { queryRecordFor } from './searcher-adapter'
 
 export async function rawReadModelEventsToEnvelopes(
-  config: BoosterConfig,
-  logger: Logger,
+  _config: BoosterConfig,
+  _logger: Logger,
   rawEvents: Array<unknown>
 ): Promise<Array<ReadModelEnvelope>> {
   return rawEvents as Array<ReadModelEnvelope>

@@ -1,10 +1,3 @@
-import {
-  Booster,
-  boosterEventDispatcher,
-  boosterNotifySubscribers,
-  boosterServeGraphQL,
-  boosterTriggerScheduledCommand,
-} from '@boostercloud/framework-core'
 import { ProviderLibrary } from '@boostercloud/framework-types'
 
 import { Infrastructure } from './infrastructure/infrastructure'
@@ -24,18 +17,7 @@ import {
   storeReadModel,
   deleteReadModel,
 } from './library/read-model-adapter'
-import { createRequestHandler } from './services/request-handler'
-
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-// const userApp: UserApp = require(path.join(process.cwd(), 'dist', 'index.js'))
-const userApp = {
-  Booster,
-  boosterEventDispatcher,
-  boosterServeGraphQL,
-  boosterNotifySubscribers,
-  boosterTriggerScheduledCommand,
-} as any
-export const handleRequest = createRequestHandler(userApp)
+import { requestHandler } from './services/request-handler'
 
 export const Provider = (): ProviderLibrary => ({
   // ProviderEventsLibrary
@@ -43,7 +25,7 @@ export const Provider = (): ProviderLibrary => ({
     rawToEnvelopes: rawEventsToEnvelopes,
     forEntitySince: readEntityEventsSince,
     latestEntitySnapshot: readEntityLatestSnapshot,
-    store: storeEvents.bind(null, userApp),
+    store: storeEvents,
     search: searchEvents,
   },
   // ProviderReadModelsLibrary
@@ -53,14 +35,10 @@ export const Provider = (): ProviderLibrary => ({
     search: searchReadModel,
     store: storeReadModel,
     delete: deleteReadModel,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    subscribe: undefined as any,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    fetchSubscriptions: undefined as any,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    deleteSubscription: undefined as any,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    deleteAllSubscriptions: undefined as any,
+    subscribe: notImplemented,
+    fetchSubscriptions: notImplemented,
+    deleteSubscription: notImplemented,
+    deleteAllSubscriptions: notImplemented,
   },
   // ProviderGraphQLLibrary
   graphQL: {
@@ -73,23 +51,18 @@ export const Provider = (): ProviderLibrary => ({
     requestFailed,
   },
   connections: {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    storeData: notImplemented as any,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    fetchData: notImplemented as any,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    deleteData: notImplemented as any,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    sendMessage: notImplemented as any,
+    storeData: notImplemented,
+    fetchData: notImplemented,
+    deleteData: notImplemented,
+    sendMessage: notImplemented,
   },
   // ScheduledCommandsLibrary
   scheduled: {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    rawToEnvelope: undefined as any,
+    rawToEnvelope: notImplemented,
   },
   // ProviderInfrastructureGetter
-  infrastructure: () => Infrastructure(handleRequest),
+  infrastructure: () => Infrastructure(requestHandler),
 })
 
-// eslint-disable-next-line @typescript-eslint/no-empty-function
-function notImplemented(): void {}
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function notImplemented(): any {}

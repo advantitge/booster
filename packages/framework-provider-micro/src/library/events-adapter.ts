@@ -1,4 +1,5 @@
-import { BoosterConfig, EventEnvelope, Logger, UserApp, UUID } from '@boostercloud/framework-types'
+import { boosterEventDispatcher } from '@boostercloud/framework-core'
+import { BoosterConfig, EventEnvelope, Logger, UUID } from '@boostercloud/framework-types'
 
 import { getCollection } from '../services/db'
 
@@ -61,7 +62,6 @@ export async function readEntityLatestSnapshot(
 }
 
 export async function storeEvents(
-  userApp: UserApp,
   eventEnvelopes: Array<EventEnvelope>,
   config: BoosterConfig,
   logger: Logger
@@ -71,5 +71,5 @@ export async function storeEvents(
   await collection.insertMany(eventEnvelopes.map((e) => ({ ...e, createdAt: new Date(e.createdAt) })))
   logger.debug('[EventsAdapter#storeEvents] EventEnvelopes stored')
 
-  await userApp.boosterEventDispatcher(eventEnvelopes)
+  await boosterEventDispatcher(eventEnvelopes)
 }
