@@ -13,27 +13,22 @@ export async function rawGraphQLRequestToEnvelope(
   const requestID = UUID.generate() // TODO: Retrieve request ID from request
   const eventType = 'MESSAGE' // TODO: (request.requestContext?.eventType as GraphQLRequestEnvelope['eventType']) ?? 'MESSAGE',
   const connectionID = undefined // TODO: Retrieve connectionId if available,
-  try {
-    return {
-      requestID,
-      eventType,
-      connectionID,
-      token: getAuthorizationToken(request),
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      value: body as any,
-    }
-  } catch (e) {
-    return {
-      error: e,
-      requestID,
-      connectionID,
-      eventType,
-    }
+  return {
+    requestID,
+    eventType,
+    connectionID,
+    token: getAuthorizationToken(request),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    value: body as any,
   }
 }
 
 function getAuthorizationToken(request: IncomingMessage): string | undefined {
-  const cookieToken = request.headers.cookie && parse(request.headers.cookie)['session-token']
-  if (cookieToken) return cookieToken
+  try {
+    const cookieToken = request.headers.cookie && parse(request.headers.cookie)['session-token']
+    if (cookieToken) return cookieToken
+  } catch (_e) {
+    // Could not parse cookie header
+  }
   return request.headers.authorization
 }

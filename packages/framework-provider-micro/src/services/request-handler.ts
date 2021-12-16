@@ -1,30 +1,33 @@
-import { httpStatusCodeFor, toClassTitle, UserApp } from '@boostercloud/framework-types'
+import { httpStatusCodeFor, toClassTitle } from '@boostercloud/framework-types'
 import { IncomingMessage, ServerResponse } from 'http'
-import { RequestHandler, send } from 'micro'
+import { send } from 'micro'
+import createCors from 'micro-cors'
+import { APIResult } from '../library/api-adapter'
+import { boosterServeGraphQL } from '@boostercloud/framework-core'
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const cors = require('micro-cors')()
+const cors = createCors()
 
-export const createRequestHandler = (userApp: UserApp): RequestHandler => {
-  return cors(async (req: IncomingMessage, res: ServerResponse): Promise<void> => {
-    if (req.method === 'OPTIONS') {
-      await send(res, 200, 'OK')
-      return
-    }
-    if (req.url === '/' && req.method === 'GET') {
-      await send(res, 200, '')
-      return
-    }
-    try {
-      const response = await userApp.boosterServeGraphQL(req)
-      await send(res, 200, response.result)
-    } catch (e) {
-      const statusCode = httpStatusCodeFor(e)
-      if (statusCode === 500) console.error(e)
-      await send(res, statusCode, {
-        title: toClassTitle(e),
-        reason: e.message,
-      })
-    }
-  })
-}
+export const requestHandler = cors(async (req: IncomingMessage, res: ServerResponse): Promise<void> => {
+  switch (req.method) {
+    case 'OPTIONS':
+      await send(res, 200, '🆗')
+      break
+    case 'GET':
+      req.url === '/' ? await send(res, 200, '🚀') : await send(res, 404, 'Not found')
+      break
+    case 'POST':
+      try {
+        const response = (await boosterServeGraphQL(req)) as APIResult
+        if (response.status !== 'success') throw Error(`Unexpected failure response: ${JSON.stringify(response)}`)
+        await send(res, 200, response.result)
+      } catch (e) {
+        if (!(e instanceof Error)) throw e
+        const statusCode = httpStatusCodeFor(e)
+        if (statusCode === 500) console.error(e)
+        await send(res, statusCode, { title: toClassTitle(e), reason: e.message })
+      }
+      break
+    default:
+      await send(res, 405, '🚫')
+  }
+})
