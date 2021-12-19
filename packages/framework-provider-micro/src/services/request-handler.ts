@@ -21,14 +21,17 @@ function renderExplorer(endpoint: string): string {
 
 export const requestHandler: (req: IncomingMessage, res: ServerResponse) => Promise<void> = cors(
   async (req: IncomingMessage, res: ServerResponse): Promise<void> => {
+    const host = req.headers.host
+    if (!host) throw Error(`Host header is missing ${JSON.stringify(req.headers)}`)
+    const url = new URL(req.url || '/', host.includes('localhost') ? `http://${host}` : `https://${host}`)
     switch (req.method) {
       case 'OPTIONS':
         await send(res, 200, responseToHtml('🆗'))
         break
       case 'GET':
-        if (req.url === '/') {
+        if (url.pathname === '/') {
           await send(res, 200, responseToHtml('🚀'))
-        } else if (req.url === '/explorer') {
+        } else if (url.pathname === '/explorer') {
           const endpoint = req.headers.host?.includes('localhost')
             ? `http://${req.headers.host}`
             : `https://${req.headers.host}`
