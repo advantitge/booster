@@ -37,7 +37,7 @@ __metadata:
     iterall: 1.3.0
     jsonwebtoken: 8.5.1
     jwks-rsa: 2.0.3
-    metadata-booster: "npm:@advantitge/metadata-booster@0.4.0-beta.2"
+    metadata-booster: "npm:@advantitge/metadata-booster@0.4.0-beta.5"
     mocha: 8.4.0
     mock-jwks: 1.0.0
     nock: 11.8.2
@@ -90,7 +90,7 @@ __metadata:
     chai: 4.2.0
     chai-as-promised: 7.1.1
     fast-check: 2.17.0
-    metadata-booster: "npm:@advantitge/metadata-booster@0.4.0-beta.2"
+    metadata-booster: "npm:@advantitge/metadata-booster@0.4.0-beta.5"
     mocha: 8.4.0
     rimraf: 3.0.2
     sinon: 9.2.3
@@ -1790,9 +1790,11 @@ __metadata:
     chai-as-promised: 7.1.1
     cross-fetch: 3.1.4
     fast-check: 2.17.0
+    graphql: 15.8.0
     jsonwebtoken: 8.5.1
-    metadata-booster: "npm:@advantitge/metadata-booster@0.4.0-beta.2"
+    metadata-booster: "npm:@advantitge/metadata-booster@0.4.0-beta.5"
     rimraf: 3.0.2
+    sinon: 9.2.3
     sinon-chai: 3.5.0
     subscriptions-transport-ws: 0.9.18
     ws: 7.4.5
@@ -1921,10 +1923,11 @@ __metadata:
     aws-sdk: 2.853.0
     cross-fetch: 3.1.4
     faker: 5.1.0
+    graphql: 15.8.0
     graphql-tag: 2.12.4
     jsonwebtoken: 8.5.1
     jwks-rsa: 2.0.3
-    metadata-booster: "npm:@advantitge/metadata-booster@0.4.0-beta.2"
+    metadata-booster: "npm:@advantitge/metadata-booster@0.4.0-beta.5"
     mocha: 8.4.0
     mocha-skip-if: 0.0.3
     rimraf: 3.0.2
@@ -2030,6 +2033,7 @@ __metadata:
     needle: ^2.5.0
     ora: ^3.4.0
     rimraf: 3.0.2
+    sinon: 9.2.3
     sinon-chai: 3.5.0
     uuid: 8.3.2
   languageName: unknown
@@ -2046,6 +2050,7 @@ __metadata:
     chai-as-promised: 7.1.1
     mocha: 8.4.0
     rimraf: 3.0.2
+    sinon: 9.2.3
     sinon-chai: 3.5.0
   languageName: unknown
   linkType: soft
@@ -2077,6 +2082,7 @@ __metadata:
     mustache: 4.1.0
     rimraf: 3.0.2
     semver: ^7.3.2
+    sinon: 9.2.3
     sinon-chai: 3.5.0
   languageName: unknown
   linkType: soft
@@ -4163,15 +4169,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@ts-morph/common@npm:~0.11.0":
-  version: 0.11.1
-  resolution: "@ts-morph/common@npm:0.11.1"
+"@ts-morph/common@npm:~0.12.2":
+  version: 0.12.2
+  resolution: "@ts-morph/common@npm:0.12.2"
   dependencies:
     fast-glob: ^3.2.7
     minimatch: ^3.0.4
     mkdirp: ^1.0.4
     path-browserify: ^1.0.1
-  checksum: 2853215cfdfb9b65f96ceef91b15a73ab6591fd27d072801884ea5acc1a8f0becd5ac214d5f3d840f5d650b7654585a9b9df86fc4287872e7be1c6f566381bfd
+  checksum: 3095b7159523a65296305113c6d85c8c7d873b821df28a7bd95b9a0a344fcb386b3356940f0833a7275cc43869669c8a8aed012cc2c25892a066d31db7440a85
   languageName: node
   linkType: hard
 
@@ -7223,10 +7229,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"code-block-writer@npm:^10.1.1":
-  version: 10.1.1
-  resolution: "code-block-writer@npm:10.1.1"
-  checksum: e048037acbcbda19fca62a3a63e4a64226ea6b5dc0fad7632d34a88c1165b29a357e5e19f0497811e9911472e824ab85f68176f40e439da87e051908956eb47c
+"code-block-writer@npm:^11.0.0":
+  version: 11.0.0
+  resolution: "code-block-writer@npm:11.0.0"
+  dependencies:
+    tslib: 2.3.1
+  checksum: d3d92a06f762d5926ecdb2033e4f30eb4c51aca365ea69ef424afbce7cc2b1518a50deff2645cc17b6fa53f234d664631f2268a4caf91af6a1fd696aa0b2fefb
   languageName: node
   linkType: hard
 
@@ -10881,19 +10889,19 @@ __metadata:
   languageName: node
   linkType: hard
 
+"graphql@npm:15.8.0, graphql@npm:^15.5.1":
+  version: 15.8.0
+  resolution: "graphql@npm:15.8.0"
+  checksum: 423325271db8858428641b9aca01699283d1fe5b40ef6d4ac622569ecca927019fce8196208b91dd1d8eb8114f00263fe661d241d0eb40c10e5bfd650f86ec5e
+  languageName: node
+  linkType: hard
+
 "graphql@npm:^14.5.3":
   version: 14.7.0
   resolution: "graphql@npm:14.7.0"
   dependencies:
     iterall: ^1.2.2
   checksum: e5f4e60799421a573904f390e1ec0aa76360f751688dbbe62e9c35baa0d3727c8d59a659bfc524f126dffe3518da87fd8ecaa78c94fd5c0fe4e035c670745242
-  languageName: node
-  linkType: hard
-
-"graphql@npm:^15.5.1":
-  version: 15.8.0
-  resolution: "graphql@npm:15.8.0"
-  checksum: 423325271db8858428641b9aca01699283d1fe5b40ef6d4ac622569ecca927019fce8196208b91dd1d8eb8114f00263fe661d241d0eb40c10e5bfd650f86ec5e
   languageName: node
   linkType: hard
 
@@ -13754,13 +13762,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"metadata-booster@npm:@advantitge/metadata-booster@0.4.0-beta.2":
-  version: 0.4.0-beta.2
-  resolution: "@advantitge/metadata-booster@npm:0.4.0-beta.2::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40advantitge%2Fmetadata-booster%2F0.4.0-beta.2%2F318437d4174942c9976634facb86bae91a5e7f3d8289f82542a14908bb435c29"
+"metadata-booster@npm:@advantitge/metadata-booster@0.4.0-beta.5":
+  version: 0.4.0-beta.5
+  resolution: "@advantitge/metadata-booster@npm:0.4.0-beta.5::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40advantitge%2Fmetadata-booster%2F0.4.0-beta.5%2F7df69576fd7a3d375d7dceb5babbd61a00564046fb461d03b695a899da300f00"
   dependencies:
     reflect-metadata: 0.1.13
-    ts-morph: 12.0.0
-  checksum: 2ec43d3d8f6524a04c38d0dae9c985b3e42419dc84c736410e56033e0877eef700476e92fdbf04fbbc4c161b840af111d3f4701a94512245da190979326eb430
+    ts-morph: 13.0.2
+    tslib: 2.3.1
+  checksum: 943e56221a77aa3e38dffa0be1f7a3f98dc2e279298580eb47805076e581943ea4d96c1ba130efce32e4478985f1f46c2adbb34aae6f890a0b3bbb1cda506cc6
   languageName: node
   linkType: hard
 
@@ -18886,13 +18895,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ts-morph@npm:12.0.0":
-  version: 12.0.0
-  resolution: "ts-morph@npm:12.0.0"
+"ts-morph@npm:13.0.2":
+  version: 13.0.2
+  resolution: "ts-morph@npm:13.0.2"
   dependencies:
-    "@ts-morph/common": ~0.11.0
-    code-block-writer: ^10.1.1
-  checksum: c033708c76448625380daa3b8c2eeea1306300fa4367804029635f0d911a3723e4315a6e0824e6dfb256df0b99aac0ea0478cb3f14ed6fae2339d43ec882a427
+    "@ts-morph/common": ~0.12.2
+    code-block-writer: ^11.0.0
+  checksum: 325e850b99f96a71b57ced55e2bf687bdc6dc477070a946a47ca925633c62f201d2a706c6972e7bb6a37d7d9e0414b040fd46800d2fd86423185818fefe284a6
   languageName: node
   linkType: hard
 
@@ -18936,17 +18945,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"tslib@npm:2.3.1, tslib@npm:^2.0.0, tslib@npm:^2.0.1, tslib@npm:^2.0.3, tslib@npm:^2.1.0, tslib@npm:^2.2.0, tslib@npm:^2.3.0, tslib@npm:~2.3.0":
+  version: 2.3.1
+  resolution: "tslib@npm:2.3.1"
+  checksum: de17a98d4614481f7fcb5cd53ffc1aaf8654313be0291e1bfaee4b4bb31a20494b7d218ff2e15017883e8ea9626599b3b0e0229c18383ba9dce89da2adf15cb9
+  languageName: node
+  linkType: hard
+
 "tslib@npm:^1.10.0, tslib@npm:^1.8.1, tslib@npm:^1.9.0, tslib@npm:^1.9.3":
   version: 1.14.1
   resolution: "tslib@npm:1.14.1"
   checksum: dbe628ef87f66691d5d2959b3e41b9ca0045c3ee3c7c7b906cc1e328b39f199bb1ad9e671c39025bd56122ac57dfbf7385a94843b1cc07c60a4db74795829acd
-  languageName: node
-  linkType: hard
-
-"tslib@npm:^2.0.0, tslib@npm:^2.0.1, tslib@npm:^2.0.3, tslib@npm:^2.1.0, tslib@npm:^2.2.0, tslib@npm:^2.3.0, tslib@npm:~2.3.0":
-  version: 2.3.1
-  resolution: "tslib@npm:2.3.1"
-  checksum: de17a98d4614481f7fcb5cd53ffc1aaf8654313be0291e1bfaee4b4bb31a20494b7d218ff2e15017883e8ea9626599b3b0e0229c18383ba9dce89da2adf15cb9
   languageName: node
   linkType: hard
 
