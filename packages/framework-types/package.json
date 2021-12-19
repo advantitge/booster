@@ -1,6 +1,6 @@
 {
   "name": "@advantitge/booster-framework-types",
-  "version": "0.23.0",
+  "version": "0.23.0-next.2",
   "description": "Contains Booster types related to the information extracted from the user project",
   "keywords": [
     "framework-types"
