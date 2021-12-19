@@ -8,7 +8,15 @@ import { boosterServeGraphQL } from '@boostercloud/framework-core'
 const cors = createCors()
 
 function responseToHtml(text: string): string {
-  return `<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body>${text}</body></html>`
+  return `<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="margin:0;">${text}</body></html>`
+}
+
+function renderExplorer(endpoint: string): string {
+  return responseToHtml(
+    `<iframe style="width:100vw;height:100vh;border:0" src="https://studio.apollographql.com/sandbox/explorer?endpoint=${encodeURIComponent(
+      endpoint
+    )}"></iframe>`
+  )
 }
 
 export const requestHandler: (req: IncomingMessage, res: ServerResponse) => Promise<void> = cors(
@@ -18,7 +26,16 @@ export const requestHandler: (req: IncomingMessage, res: ServerResponse) => Prom
         await send(res, 200, responseToHtml('🆗'))
         break
       case 'GET':
-        req.url === '/' ? await send(res, 200, responseToHtml('🚀')) : await send(res, 404, 'Not found')
+        if (req.url === '/') {
+          await send(res, 200, responseToHtml('🚀'))
+        } else if (req.url === '/explorer') {
+          const endpoint = req.headers.host?.includes('localhost')
+            ? `http://${req.headers.host}`
+            : `https://${req.headers.host}`
+          await send(res, 200, renderExplorer(endpoint))
+        } else {
+          await send(res, 404, responseToHtml('4️⃣0️⃣4️⃣ Not found'))
+        }
         break
       case 'POST':
         try {
