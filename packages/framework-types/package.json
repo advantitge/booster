@@ -44,6 +44,7 @@
     "fast-check": "2.17.0",
     "metadata-booster": "npm:@advantitge/metadata-booster@0.4.0-beta.2",
     "mocha": "8.4.0",
+    "rimraf": "3.0.2",
     "sinon": "9.2.3",
     "sinon-chai": "3.5.0"
   }
