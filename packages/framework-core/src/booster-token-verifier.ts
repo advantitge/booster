@@ -1,5 +1,4 @@
-import { BoosterConfig, UserEnvelope } from '@boostercloud/framework-types'
-import { TokenVerifierConfig } from '../../framework-types/src/concepts/token-verifier-config'
+import { BoosterConfig, TokenVerifierConfig, UserEnvelope } from '@boostercloud/framework-types'
 import { JWTVerifyOptions, createRemoteJWKSet, importSPKI, jwtVerify, KeyLike, jwtDecrypt } from 'jose'
 import { URL } from 'url'
 
@@ -34,7 +33,7 @@ class TokenVerifierClient {
       return this.tokenToUserEnvelope(payload)
     }
     if ('decryptionKey' in this.tokenVerifierConfig) {
-      const { payload } = await jwtDecrypt(token, Buffer.from(this.tokenVerifierConfig.decryptionKey))
+      const { payload } = await jwtDecrypt(token, this.tokenVerifierConfig.decryptionKey)
       return this.tokenToUserEnvelope(payload)
     }
     if (!this.publicKey && 'publicKey' in this.tokenVerifierConfig) await this.importKey()

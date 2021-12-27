@@ -9,6 +9,6 @@ export type TokenVerifierConfig = {
       publicKey: string | { algorithm: string; payload: string }
     }
   | {
-      decryptionKey: string
+      decryptionKey: Uint8Array
     }
 )
