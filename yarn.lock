@@ -19,8 +19,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@advantitge/booster-framework-core@workspace:packages/framework-core"
   dependencies:
-    "@boostercloud/framework-common-helpers": 0.23.0
-    "@boostercloud/framework-types": 0.23.0
+    "@boostercloud/framework-common-helpers": "link:../framework-common-helpers"
+    "@boostercloud/framework-types": "link:../framework-types"
     "@types/faker": 5.1.5
     "@types/graphql-type-json": 0.3.2
     "@types/inflected": 1.1.29
@@ -44,6 +44,7 @@ __metadata:
     sinon: 9.2.3
     sinon-chai: 3.5.0
     tslib: 2.3.0
+    typescript: 4.2.4
     validator: 13.6.0
   languageName: unknown
   linkType: soft
@@ -95,6 +96,7 @@ __metadata:
     sinon: 9.2.3
     sinon-chai: 3.5.0
     tslib: 2.3.0
+    typescript: 4.2.4
     uuid: 8.3.2
   languageName: unknown
   linkType: soft
@@ -1804,8 +1806,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@boostercloud/cli@workspace:packages/cli"
   dependencies:
-    "@boostercloud/framework-core": 0.23.0
-    "@boostercloud/framework-types": 0.23.0
+    "@boostercloud/framework-core": "link:../framework-core"
+    "@boostercloud/framework-types": "link:../framework-types"
     "@oclif/command": ^1
     "@oclif/config": ^1
     "@oclif/dev-cli": ^1
@@ -1847,7 +1849,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@boostercloud/framework-common-helpers@workspace:packages/framework-common-helpers"
   dependencies:
-    "@boostercloud/framework-types": 0.23.0
+    "@boostercloud/framework-types": "link:../framework-types"
     "@types/uuid": 8.3.0
     chai: 4.2.0
     chai-as-promised: 7.1.1
@@ -1857,6 +1859,18 @@ __metadata:
     sinon-chai: 3.5.0
     tslib: 2.3.0
   languageName: unknown
+  linkType: soft
+
+"@boostercloud/framework-common-helpers@link:../framework-common-helpers::locator=%40advantitge%2Fbooster-framework-core%40workspace%3Apackages%2Fframework-core":
+  version: 0.0.0-use.local
+  resolution: "@boostercloud/framework-common-helpers@link:../framework-common-helpers::locator=%40advantitge%2Fbooster-framework-core%40workspace%3Apackages%2Fframework-core"
+  languageName: node
+  linkType: soft
+
+"@boostercloud/framework-core@link:../framework-core::locator=%40boostercloud%2Fcli%40workspace%3Apackages%2Fcli":
+  version: 0.0.0-use.local
+  resolution: "@boostercloud/framework-core@link:../framework-core::locator=%40boostercloud%2Fcli%40workspace%3Apackages%2Fcli"
+  languageName: node
   linkType: soft
 
 "@boostercloud/framework-core@npm:0.23.0":
@@ -1875,6 +1889,7 @@ __metadata:
     jwks-rsa: 2.0.3
     reflect-metadata: 0.1.13
     tslib: 2.3.0
+    typescript: 4.2.4
     validator: 13.6.0
   checksum: 95bd47c414435e292525bcc50999819b8523667c1e9f744fa4086f9c288367fcdfcddc24bc59def43e6bef912c8c07346270edc4c3d261315b46ba27ffae7658
   languageName: node
@@ -2154,12 +2169,31 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@boostercloud/framework-types@link:../framework-types::locator=%40advantitge%2Fbooster-framework-core%40workspace%3Apackages%2Fframework-core":
+  version: 0.0.0-use.local
+  resolution: "@boostercloud/framework-types@link:../framework-types::locator=%40advantitge%2Fbooster-framework-core%40workspace%3Apackages%2Fframework-core"
+  languageName: node
+  linkType: soft
+
+"@boostercloud/framework-types@link:../framework-types::locator=%40boostercloud%2Fcli%40workspace%3Apackages%2Fcli":
+  version: 0.0.0-use.local
+  resolution: "@boostercloud/framework-types@link:../framework-types::locator=%40boostercloud%2Fcli%40workspace%3Apackages%2Fcli"
+  languageName: node
+  linkType: soft
+
+"@boostercloud/framework-types@link:../framework-types::locator=%40boostercloud%2Fframework-common-helpers%40workspace%3Apackages%2Fframework-common-helpers":
+  version: 0.0.0-use.local
+  resolution: "@boostercloud/framework-types@link:../framework-types::locator=%40boostercloud%2Fframework-common-helpers%40workspace%3Apackages%2Fframework-common-helpers"
+  languageName: node
+  linkType: soft
+
 "@boostercloud/framework-types@npm:0.23.0":
   version: 0.23.0
   resolution: "@boostercloud/framework-types@npm:0.23.0"
   dependencies:
     "@types/graphql": 14.5.0
     tslib: 2.3.0
+    typescript: 4.2.4
     uuid: 8.3.2
   checksum: 6c8e1be3cb2d3134e84658e3c733d2e81d63415a78e0ced212ca57a589c749cd7bcca63a5d0a57d4cbfcf4a881f8f98da910b6f290391f071118a288c77a7b58
   languageName: node
