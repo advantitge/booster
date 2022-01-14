@@ -1845,7 +1845,17 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@boostercloud/framework-common-helpers@0.23.0, @boostercloud/framework-common-helpers@^0.23.0, @boostercloud/framework-common-helpers@workspace:packages/framework-common-helpers":
+"@boostercloud/framework-common-helpers@portal:packages/framework-common-helpers::locator=root%40workspace%3A.":
+  version: 0.0.0-use.local
+  resolution: "@boostercloud/framework-common-helpers@portal:packages/framework-common-helpers::locator=root%40workspace%3A."
+  dependencies:
+    "@boostercloud/framework-types": 0.23.0
+    child-process-promise: ^2.2.1
+    tslib: 2.3.0
+  languageName: node
+  linkType: soft
+
+"@boostercloud/framework-common-helpers@workspace:packages/framework-common-helpers":
   version: 0.0.0-use.local
   resolution: "@boostercloud/framework-common-helpers@workspace:packages/framework-common-helpers"
   dependencies:
@@ -2159,27 +2169,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@boostercloud/framework-types@npm:0.23.0":
-  version: 0.23.0
-  resolution: "@boostercloud/framework-types@npm:0.23.0"
+"@boostercloud/framework-types@portal:packages/framework-types::locator=root%40workspace%3A.":
+  version: 0.0.0-use.local
+  resolution: "@boostercloud/framework-types@portal:packages/framework-types::locator=root%40workspace%3A."
   dependencies:
     "@types/graphql": 14.5.0
     tslib: 2.3.0
     uuid: 8.3.2
-  checksum: 6c8e1be3cb2d3134e84658e3c733d2e81d63415a78e0ced212ca57a589c749cd7bcca63a5d0a57d4cbfcf4a881f8f98da910b6f290391f071118a288c77a7b58
   languageName: node
-  linkType: hard
-
-"@boostercloud/framework-types@npm:^0.23.0":
-  version: 0.23.1
-  resolution: "@boostercloud/framework-types@npm:0.23.1"
-  dependencies:
-    "@types/graphql": 14.5.0
-    tslib: 2.3.0
-    uuid: 8.3.2
-  checksum: 99c1d30f27ff3093a5f0d254af9497388756b9a2cce5b730abba386e364e50cea1dee776a45f57148e2f238b391569c70c9857dfed41d97996a86f305628d4b2
-  languageName: node
-  linkType: hard
+  linkType: soft
 
 "@cdktf/hcl2cdk@npm:0.8.0-pre.10":
   version: 0.8.0-pre.10
