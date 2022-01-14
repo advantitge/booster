@@ -49,5 +49,8 @@
     "*.{js,ts,md}": "prettier --single-quote --write",
     "**/*.{ts,md}": "prettier --single-quote --write"
   },
+  "resolutions": {
+    "metadata-booster": "npm:@advantitge/metadata-booster@0.4.0-beta.6"
+  },
   "packageManager": "yarn@3.1.1"
 }
