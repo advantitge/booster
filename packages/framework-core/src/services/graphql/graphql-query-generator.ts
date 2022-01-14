@@ -23,7 +23,6 @@ import {
 import { GraphQLJSONObject } from 'graphql-type-json'
 import * as inflected from 'inflected'
 import { PropertyMetadata, TypeMetadata } from 'metadata-booster'
-import { type } from 'os'
 import { getClassMetadata } from './../../decorators/metadata'
 import { DateScalar, GraphQLResolverContext, isExternalType, ResolverBuilder } from './common'
 import { GraphQLTypeInformer } from './graphql-type-informer'
@@ -225,6 +224,8 @@ export class GraphQLQueryGenerator {
   }
 
   private generateFilterFor(prop: PropertyMetadata): GraphQLInputObjectType | GraphQLScalarType {
+    if (!prop.typeInfo.type || prop.typeInfo.type.name === 'Object') return GraphQLJSONObject
+
     let filterName = `${prop.typeInfo.name}PropertyFilter`
     filterName = filterName.charAt(0).toUpperCase() + filterName.substr(1)
 
@@ -232,9 +233,7 @@ export class GraphQLQueryGenerator {
     if (prop.typeInfo.typeGroup === 'Array') return this.generateArrayFilterFor(prop)
     let fields: Thunk<GraphQLInputFieldConfigMap> = {}
 
-    if (prop.typeInfo.name === 'UUID' || prop.typeInfo.name === 'Date') {
-      fields = this.generateFilterInputTypes(prop.typeInfo)
-    } else if (prop.typeInfo.type && prop.typeInfo.typeGroup === 'Class') {
+    if (prop.typeInfo.typeGroup === 'Class' && prop.typeInfo.name !== 'UUID') {
       if (isExternalType(prop.typeInfo)) return GraphQLJSONObject
       let nestedProperties: GraphQLInputFieldConfigMap = {}
       const metadata = getClassMetadata(prop.typeInfo.type)
@@ -253,7 +252,7 @@ export class GraphQLQueryGenerator {
         not: { type: this.generatedFiltersByTypeName[filterName] },
       })
     } else {
-      return GraphQLJSONObject
+      fields = this.generateFilterInputTypes(prop.typeInfo)
     }
     this.generatedFiltersByTypeName[filterName] = new GraphQLInputObjectType({ name: filterName, fields })
     return this.generatedFiltersByTypeName[filterName]
@@ -293,7 +292,7 @@ export class GraphQLQueryGenerator {
   }
 
   private generateFilterInputTypes(typeMetadata: TypeMetadata): GraphQLInputFieldConfigMap {
-    const { name, typeGroup } = typeMetadata
+    const { type, typeGroup } = typeMetadata
     if (typeGroup === 'Boolean')
       return {
         eq: { type: GraphQLBoolean },
@@ -321,15 +320,13 @@ export class GraphQLQueryGenerator {
         beginsWith: { type: GraphQLString },
         contains: { type: GraphQLString },
       }
-    // use `name`, `typeGroup` === 'Class'
-    if (name === 'UUID')
+    if (type === UUID)
       return {
         eq: { type: GraphQLID },
         ne: { type: GraphQLID },
         in: { type: GraphQLList(GraphQLID) },
       }
-    // use `name`, `typeGroup` === 'Interface'
-    if (name === 'Date')
+    if (type === Date)
       return {
         eq: { type: DateScalar },
         ne: { type: DateScalar },
