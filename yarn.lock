@@ -1939,19 +1939,22 @@ __metadata:
     "@aws-cdk/aws-apigatewayv2": 1.91.0
     "@aws-cdk/aws-cloudfront": 1.91.0
     "@aws-cdk/aws-dynamodb": 1.91.0
+    "@aws-cdk/aws-events": 1.91.0
     "@aws-cdk/aws-events-targets": 1.91.0
     "@aws-cdk/aws-iam": 1.91.0
     "@aws-cdk/aws-lambda": 1.91.0
     "@aws-cdk/aws-lambda-event-sources": 1.91.0
     "@aws-cdk/aws-s3": 1.91.0
     "@aws-cdk/aws-s3-deployment": 1.91.0
+    "@aws-cdk/core": 1.91.0
+    "@aws-cdk/cx-api": 1.91.0
     "@boostercloud/framework-provider-aws": 0.23.0
     "@boostercloud/framework-types": 0.23.0
     "@types/aws-lambda": 8.10.48
     "@types/aws-sdk": 2.7.0
     "@types/faker": 5.1.5
     aws-cdk: 1.91.0
-    aws-sdk: 2.853.0
+    aws-sdk: ^2.848.0
     chai: 4.2.0
     chai-as-promised: 7.1.1
     colors: ^1.4.0
@@ -2163,7 +2166,6 @@ __metadata:
   dependencies:
     "@types/graphql": 14.5.0
     tslib: 2.3.0
-    typescript: 4.2.4
     uuid: 8.3.2
   checksum: 6c8e1be3cb2d3134e84658e3c733d2e81d63415a78e0ced212ca57a589c749cd7bcca63a5d0a57d4cbfcf4a881f8f98da910b6f290391f071118a288c77a7b58
   languageName: node
