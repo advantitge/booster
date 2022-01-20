@@ -35,7 +35,7 @@ export async function searchEvents(
     throw new Error('Invalid search event query. It is neither an search by "entity" nor a search by "type"')
   }
   const collection = await getCollection(config.resourceNames.eventsStore)
-  const eventEnvelopes = await collection.find(query).sort({ createdAt: -1 }).toArray<DatabaseEventEnvelope>()
+  const eventEnvelopes = await collection.find(query).sort({ createdAt: 1 }).toArray<DatabaseEventEnvelope>()
   logger.debug('Events search result: ', eventEnvelopes)
   return eventEnvelopes.map((e) => ({
     ...e,
