@@ -1871,26 +1871,24 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@boostercloud/framework-core@npm:0.23.0":
-  version: 0.23.0
-  resolution: "@boostercloud/framework-core@npm:0.23.0"
+"@boostercloud/framework-core@portal:packages/framework-core::locator=root%40workspace%3A.":
+  version: 0.0.0-use.local
+  resolution: "@boostercloud/framework-core@portal:packages/framework-core::locator=root%40workspace%3A."
   dependencies:
-    "@boostercloud/framework-common-helpers": ^0.23.0
-    "@boostercloud/framework-types": ^0.23.0
+    "@boostercloud/framework-common-helpers": 0.23.0
+    "@boostercloud/framework-types": 0.23.0
     fp-ts: 2.10.5
-    graphql: ^15.5.1
+    graphql: 15.8.0
     graphql-subscriptions: 1.2.1
     graphql-type-json: 0.3.2
     inflected: 2.1.0
     iterall: 1.3.0
-    jsonwebtoken: 8.5.1
-    jwks-rsa: 2.0.3
+    jose: 4.3.7
     reflect-metadata: 0.1.13
     tslib: 2.3.0
     validator: 13.6.0
-  checksum: 95bd47c414435e292525bcc50999819b8523667c1e9f744fa4086f9c288367fcdfcddc24bc59def43e6bef912c8c07346270edc4c3d261315b46ba27ffae7658
   languageName: node
-  linkType: hard
+  linkType: soft
 
 "@boostercloud/framework-integration-tests@workspace:packages/framework-integration-tests":
   version: 0.0.0-use.local
