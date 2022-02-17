@@ -18,6 +18,7 @@ async function indexEventsCollection(config: BoosterConfig): Promise<void> {
   const eventsCollectionName = config.resourceNames.eventsStore
   const collection = await getCollection(eventsCollectionName)
   await collection.createIndex({ entityTypeName: 1, entityID: 1, kind: 1, createdAt: -1 })
+  await collection.createIndex({ entityID: 1, entityTypeName: 1, kind: 1, createdAt: -1 })
   await collection.createIndex(
     { entityTypeName: 1, kind: 1, createdAt: -1 },
     { name: eventsCollectionName + '-index-by-entity' }
