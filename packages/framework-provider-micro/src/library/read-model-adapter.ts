@@ -76,7 +76,7 @@ export async function searchReadModel(
     .aggregate([
       { $match: query },
       { $skip: afterCursor?.index || 0 },
-      { $limit: limit || 100 },
+      { $limit: limit || 1000 },
       { $addFields: { id: '$_id' } },
       { $project: { _id: 0 } },
     ])
