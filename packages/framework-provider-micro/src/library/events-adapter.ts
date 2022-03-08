@@ -66,9 +66,30 @@ export async function storeEvents(
   config: BoosterConfig,
   logger: Logger
 ): Promise<void> {
+  const [events, snapshots] = [[] as Array<EventEnvelope>, [] as Array<EventEnvelope>]
+  eventEnvelopes.forEach((eventEnvelope) =>
+    eventEnvelope.kind === 'snapshot' ? snapshots.push(eventEnvelope) : events.push(eventEnvelope)
+  )
+
   const collection = await getCollection(config.resourceNames.eventsStore)
-  logger.debug('[EventsAdapter#storeEvents] Storing the following event envelopes:', eventEnvelopes)
-  await collection.insertMany(eventEnvelopes.map((e) => ({ ...e, createdAt: new Date(e.createdAt) })))
+  if (events.length > 0) {
+    logger.debug('[EventsAdapter#storeEvents] Storing the following event envelopes for kind `event`:', events)
+    await collection.insertMany(events.map((e) => ({ ...e, createdAt: new Date(e.createdAt) })))
+  }
+
+  if (snapshots.length > 0) {
+    logger.debug('[EventsAdapter#storeEvents] Storing the following event envelopes for kind `snapshot`:', snapshots)
+    await collection.bulkWrite(
+      snapshots.map((snapshot) => ({
+        updateOne: {
+          filter: { entityID: snapshot.entityID, kind: 'snapshot' },
+          update: { $set: { ...snapshot, createdAt: new Date(snapshot.createdAt) } },
+          upsert: true,
+        },
+      }))
+    )
+  }
+
   logger.debug('[EventsAdapter#storeEvents] EventEnvelopes stored')
 
   await boosterEventDispatcher(eventEnvelopes)
