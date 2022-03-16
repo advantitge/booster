@@ -61,7 +61,7 @@ type QueryOperation<TValue> =
     }
   // `in` operators must have an array as a result
   | {
-      [TKey in '$in' | '$nin']?: Array<TValue>
+      [TKey in '$in' | '$nin' | '$all']?: Array<TValue>
     }
   // `regex` must have a RegExp as a result
   | {
@@ -85,7 +85,7 @@ const queryOperatorTable: Record<string, (values: Array<QueryValue>) => QueryOpe
   in: (values) => ({ $in: values }),
   contains: buildRegexQuery.bind(null, 'contains'),
   beginsWith: buildRegexQuery.bind(null, 'begins-with'),
-  includes: buildRegexQuery.bind(null, 'contains'),
+  includes: (values) => ({ $all: values }),
 }
 
 /**
