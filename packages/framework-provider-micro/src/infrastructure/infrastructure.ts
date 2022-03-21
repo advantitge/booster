@@ -19,11 +19,9 @@ async function indexEventsCollection(config: BoosterConfig): Promise<void> {
   const collection = await getCollection(eventsCollectionName)
   await collection.createIndex({ entityTypeName: 1, entityID: 1, kind: 1, createdAt: -1 })
   await collection.createIndex({ entityID: 1, entityTypeName: 1, kind: 1, createdAt: -1 })
-  await collection.createIndex(
-    { entityTypeName: 1, kind: 1, createdAt: -1 },
-    { name: eventsCollectionName + '-index-by-entity' }
-  )
-  await collection.createIndex({ typeName: 1, createdAt: -1 }, { name: eventsCollectionName + '-index-by-type' })
+  await collection.createIndex({ entityTypeName: 1, kind: 1, createdAt: -1 })
+  await collection.createIndex({ typeName: 1, createdAt: -1 })
+  await collection.createIndex({ kind: 1, createdAt: -1 })
 }
 
 async function indexReadModelsCollections(config: BoosterConfig): Promise<void> {
