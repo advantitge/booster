@@ -74,16 +74,16 @@ export async function searchReadModel(
   logger.debug('Converting filter to query')
   const query = queryRecordFor(readModelName, filters)
   logger.debug('Got query ', query)
-  const result = await collection
-    .aggregate<ReadModelEnvelope>([
-      { $match: query },
-      { $sort: convertSortBy(sortBy) },
-      { $skip: afterCursor?.index || 0 },
-      { $limit: limit || 1000 },
-      { $addFields: { id: '$_id' } },
-      { $project: { _id: 0 } },
-    ])
-    .toArray()
+  const stages = [
+    { $match: query },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ...([sortBy && Object.keys(sortBy).length > 0 && { $sort: convertSortBy(sortBy) }] as any),
+    { $skip: afterCursor?.index || 0 },
+    { $limit: limit || 1000 },
+    { $addFields: { id: '$_id' } },
+    { $project: { _id: 0 } },
+  ].filter(Boolean)
+  const result = await collection.aggregate<ReadModelEnvelope>(stages).toArray()
   logger.debug('[ReadModelAdapter#searchReadModel] Search result: ', result)
   if (paginatedVersion) {
     const count = await collection.count(query)
@@ -112,7 +112,7 @@ export async function deleteReadModel(
 function convertSortBy(sortBy?: SortFor<unknown>): { [field: string]: 1 | -1 } {
   if (sortBy) {
     return Object.entries(sortBy).reduce((acc, [field, direction]) => {
-      acc[field] = direction === 'asc' ? 1 : -1
+      acc[field] = direction === 'ASC' ? 1 : -1
       return acc
     }, {} as { [field: string]: 1 | -1 })
   } else {
