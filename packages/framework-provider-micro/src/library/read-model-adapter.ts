@@ -32,7 +32,7 @@ export async function fetchReadModel(
     logger.info('sequencedBy not implemented for framework-provider-micro!')
   }
   const collection = await getCollection(config.resourceNames.forReadModel(readModelName))
-  const readModel = (await collection.findOne({ _id: readModelID })) as ReadModelInterface
+  const readModel = await collection.findOne<ReadModelInterface>({ _id: readModelID })
   if (!readModel) {
     logger.debug(`[ReadModelAdapter#fetchReadModel] Read model ${readModelName} with ID ${readModelID} not found`)
     return [] as any // TODO: cannot return empty array or array with undefined/null..?
