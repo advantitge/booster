@@ -15,11 +15,11 @@ export class Registry<T> {
   }
 
   public async query(query: Filter<T>): Promise<Array<T>> {
-    return this.collection.find(query).sort({ createdAt: 1 }).toArray<T>()
+    return this.collection.find<T>(query).sort({ createdAt: 1 }).toArray()
   }
 
   public async queryLatest(query: Filter<T>): Promise<T | null> {
-    const results = await this.collection.find(query).sort({ createdAt: -1 }).limit(1).toArray<T>()
+    const results = await this.collection.find<T>(query).sort({ createdAt: -1 }).limit(1).toArray()
     return results?.[0] || null
   }
 

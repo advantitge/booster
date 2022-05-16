@@ -73,14 +73,14 @@ export async function searchReadModel(
   const query = queryRecordFor(readModelName, filters)
   logger.debug('Got query ', query)
   const result = await collection
-    .aggregate([
+    .aggregate<ReadModelEnvelope>([
       { $match: query },
       { $skip: afterCursor?.index || 0 },
       { $limit: limit || 1000 },
       { $addFields: { id: '$_id' } },
       { $project: { _id: 0 } },
     ])
-    .toArray<ReadModelEnvelope>()
+    .toArray()
   logger.debug('[ReadModelAdapter#searchReadModel] Search result: ', result)
   if (paginatedVersion) {
     const count = await collection.count(query)

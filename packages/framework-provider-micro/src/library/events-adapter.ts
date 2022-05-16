@@ -23,7 +23,7 @@ export async function readEntityEventsSince(
     },
   }
   const collection = await getCollection(config.resourceNames.eventsStore)
-  const result = await collection.find(query).sort({ createdAt: 1 }).toArray<EventEnvelope>()
+  const result = await collection.find<EventEnvelope>(query).sort({ createdAt: 1 }).toArray()
 
   logger.debug(
     `[EventsAdapter#readEntityEventsSince] Loaded events for entity ${entityTypeName} with ID ${entityID} with result:`,
@@ -44,7 +44,7 @@ export async function readEntityLatestSnapshot(
     kind: 'snapshot' as const,
   }
   const collection = await getCollection(config.resourceNames.eventsStore)
-  const events = await collection.find(query).sort({ createdAt: -1 }).limit(1).toArray<EventEnvelope>()
+  const events = await collection.find<EventEnvelope>(query).sort({ createdAt: -1 }).limit(1).toArray()
   const snapshot = events?.[0]
 
   if (snapshot) {
