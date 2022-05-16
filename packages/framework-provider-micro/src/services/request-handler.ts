@@ -4,6 +4,7 @@ import { send } from 'micro'
 import createCors from 'micro-cors'
 import { APIResult } from '../library/api-adapter'
 import { boosterServeGraphQL } from '@boostercloud/framework-core'
+import { URL } from 'url'
 
 const cors = createCors()
 
