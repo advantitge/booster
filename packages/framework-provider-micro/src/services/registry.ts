@@ -1,4 +1,4 @@
-import { Collection, Filter, MongoClient, OptionalId } from 'mongodb'
+import { Collection, Filter, MongoClient, OptionalUnlessRequiredId } from 'mongodb'
 
 export class Registry<T> {
   private client: MongoClient
@@ -27,7 +27,7 @@ export class Registry<T> {
     await this.collection.replaceOne(query, item, { upsert: true })
   }
 
-  public async insert(item: OptionalId<T>): Promise<void> {
+  public async insert(item: OptionalUnlessRequiredId<T>): Promise<void> {
     await this.collection.insertOne(item)
   }
 

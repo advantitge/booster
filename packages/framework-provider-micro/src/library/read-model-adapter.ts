@@ -7,6 +7,7 @@ import {
   ReadModelListResult,
   ReadOnlyNonEmptyArray,
   SequenceKey,
+  SortFor,
   UUID,
 } from '@boostercloud/framework-types'
 
@@ -64,8 +65,9 @@ export async function searchReadModel(
   logger: Logger,
   readModelName: string,
   filters: FilterFor<unknown>,
+  sortBy?: SortFor<unknown>,
   limit?: number,
-  afterCursor?: { index: number },
+  afterCursor?: { index: number } | undefined,
   paginatedVersion = false
 ): Promise<Array<any> | ReadModelListResult<any>> {
   const collection = await getCollection(config.resourceNames.forReadModel(readModelName))
