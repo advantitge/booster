@@ -77,6 +77,7 @@ export async function searchReadModel(
   const result = await collection
     .aggregate<ReadModelEnvelope>([
       { $match: query },
+      { $sort: convertSortBy(sortBy) },
       { $skip: afterCursor?.index || 0 },
       { $limit: limit || 1000 },
       { $addFields: { id: '$_id' } },
@@ -106,4 +107,15 @@ export async function deleteReadModel(
   logger.debug('[ReadModelAdapter#deleteReadModel] Deleting readModel ' + JSON.stringify(readModel))
   await collection.deleteOne({ _id: readModel.id })
   logger.debug('[ReadModelAdapter#deleteReadModel] Read model deleted')
+}
+
+function convertSortBy(sortBy?: SortFor<unknown>): { [field: string]: 1 | -1 } {
+  if (sortBy) {
+    return Object.entries(sortBy).reduce((acc, [field, direction]) => {
+      acc[field] = direction === 'asc' ? 1 : -1
+      return acc
+    }, {} as { [field: string]: 1 | -1 })
+  } else {
+    return {}
+  }
 }
