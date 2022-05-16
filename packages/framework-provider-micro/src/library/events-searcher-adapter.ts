@@ -1,8 +1,8 @@
 import {
   BoosterConfig,
   EventEnvelope,
-  EventFilter,
   EventInterface,
+  EventSearchParameters,
   EventSearchResponse,
   Logger,
 } from '@boostercloud/framework-types'
@@ -14,23 +14,23 @@ type DatabaseEventEnvelope = Omit<EventEnvelope, 'createdAt'> & { createdAt: Dat
 export async function searchEvents(
   config: BoosterConfig,
   logger: Logger,
-  filters: EventFilter
+  parameters: EventSearchParameters
 ): Promise<Array<EventSearchResponse>> {
-  logger.debug('Initiating an events search. Filters: ', filters)
+  logger.debug('Initiating an events search. Filters: ', parameters)
   const query: Filter<DatabaseEventEnvelope> = {
     kind: { $eq: 'event' },
     createdAt: {
-      $gte: filters.from ? new Date(filters.from) : new Date(0),
-      $lte: filters.to ? new Date(filters.to) : new Date(),
+      $gte: parameters.from ? new Date(parameters.from) : new Date(0),
+      $lte: parameters.to ? new Date(parameters.to) : new Date(),
     },
   }
-  if ('entity' in filters) {
-    query.entityTypeName = { $eq: filters.entity }
-    if (filters.entityID) {
-      query.entityID = { $eq: filters.entityID }
+  if ('entity' in parameters) {
+    query.entityTypeName = { $eq: parameters.entity }
+    if (parameters.entityID) {
+      query.entityID = { $eq: parameters.entityID }
     }
-  } else if ('type' in filters) {
-    query.typeName = { $eq: filters.type }
+  } else if ('type' in parameters) {
+    query.typeName = { $eq: parameters.type }
   } else {
     throw new Error('Invalid search event query. It is neither an search by "entity" nor a search by "type"')
   }
