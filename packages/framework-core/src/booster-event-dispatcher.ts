@@ -56,7 +56,7 @@ export class BoosterEventDispatcher {
     }
   }
 
-  private static async snapshotAndUpdateReadModels(
+  static async snapshotAndUpdateReadModels(
     entityName: string,
     entityID: UUID,
     envelopes: Array<EventEnvelope>,

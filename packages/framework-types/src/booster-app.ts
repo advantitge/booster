@@ -7,6 +7,7 @@ import {
   Searcher,
   EventSearchParameters,
   EventSearchResponse,
+  EventDeleteParameters,
 } from '.'
 
 /**
@@ -22,4 +23,8 @@ export interface BoosterApp {
   readModel<TReadModel extends ReadModelInterface>(readModelClass: Class<TReadModel>): Searcher<TReadModel>
   events(request: EventSearchParameters): Promise<Array<EventSearchResponse>>
   configuredEnvironments: Set<string>
+  deleteEntity<TEntity extends EntityInterface>(entityClass: Class<TEntity>, entityID: UUID): Promise<void>
+  deleteEvents(request: EventDeleteParameters): Promise<void>
+  deleteReadModel<TReadModel extends ReadModelInterface>(readModelClass: Class<TReadModel>, id: UUID): Promise<void>
+  replay<TEntity extends EntityInterface>(entityClass: Class<TEntity>, entityID: UUID): Promise<void>
 }

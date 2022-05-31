@@ -24,6 +24,13 @@ export class EventStore {
     this.logger = logger
   }
 
+  public async deleteEntitySnapshots(entityName: string, entityID: UUID): Promise<void> {
+    this.logger.debug(
+      `[EventStore#deleteEntitySnapshots] Deleting snapshots for entity ${entityName} with ID ${entityID}`
+    )
+    return this.provider.events.deleteEntitySnapshots(this.config, this.logger, entityName, entityID)
+  }
+
   public async fetchEntitySnapshot(entityName: string, entityID: UUID): Promise<EventEnvelope | null> {
     this.logger.debug(`[EventStore#fetchEntitySnapshot] Fetching snapshot for entity ${entityName} with ID ${entityID}`)
     const latestSnapshotEnvelope = await this.loadLatestSnapshot(entityName, entityID)
