@@ -1,10 +1,10 @@
 import {
   BoosterConfig,
   EventEnvelope,
-  EventFilter,
   EventInterface,
+  EventSearchParameters,
   EventSearchResponse,
-  Logger,
+  PaginatedEntitiesIdsResult,
   UUID,
 } from '@boostercloud/framework-types'
 import { DynamoDB } from 'aws-sdk'
@@ -12,19 +12,30 @@ import { dynamoDbBatchGetLimit, eventsStoreAttributes } from '../constants'
 import { DocumentClient } from 'aws-sdk/clients/dynamodb'
 import { partitionKeyForEvent, partitionKeyForIndexByEntity } from './keys-helper'
 import { inChunksOf } from '../pagination-helpers'
+import { getLogger } from '@boostercloud/framework-common-helpers'
 
 export async function searchEvents(
   dynamoDB: DynamoDB.DocumentClient,
   config: BoosterConfig,
-  logger: Logger,
-  filters: EventFilter
+  parameters: EventSearchParameters
 ): Promise<Array<EventSearchResponse>> {
-  logger.debug('Initiating an events search. Filters: ', filters)
-  const timeFilterQuery = buildSearchEventsTimeQuery(filters.from, filters.to)
-  const eventEnvelopes = await executeSearch(dynamoDB, config, logger, filters, timeFilterQuery)
+  const logger = getLogger(config, 'events-searcher-adapter#searchEvents')
+  logger.debug('Initiating an events search. Filters: ', parameters)
+  const timeFilterQuery = buildSearchEventsTimeQuery(parameters.from, parameters.to)
+  const eventEnvelopes = await executeSearch(dynamoDB, config, parameters, timeFilterQuery, parameters.limit)
 
   logger.debug('Events search result: ', eventEnvelopes)
   return convertToSearchResult(eventEnvelopes)
+}
+
+export async function searchEntitiesIds(
+  dynamoDB: DynamoDB.DocumentClient,
+  config: BoosterConfig,
+  limit: number,
+  afterCursor: Record<string, string> | undefined,
+  entityTypeName: string
+): Promise<PaginatedEntitiesIdsResult> {
+  throw new Error('eventsSearcherAdapter#searchEntitiesIds: Not implemented yet')
 }
 
 interface TimeQueryData {
@@ -62,25 +73,18 @@ function buildSearchEventsTimeQuery(from?: string, to?: string): TimeQueryData {
 async function executeSearch(
   dynamoDB: DynamoDB.DocumentClient,
   config: BoosterConfig,
-  logger: Logger,
-  filters: EventFilter,
-  timeFilterQuery: TimeQueryData
+  filters: EventSearchParameters,
+  timeFilterQuery: TimeQueryData,
+  limit?: number
 ): Promise<Array<EventEnvelope>> {
   if ('entity' in filters) {
     if (filters.entityID) {
-      return await searchEventsByEntityAndID(
-        dynamoDB,
-        config,
-        logger,
-        filters.entity,
-        filters.entityID,
-        timeFilterQuery
-      )
+      return await searchEventsByEntityAndID(dynamoDB, config, filters.entity, filters.entityID, timeFilterQuery, limit)
     } else {
-      return await searchEventsByEntity(dynamoDB, config, logger, filters.entity, timeFilterQuery)
+      return await searchEventsByEntity(dynamoDB, config, filters.entity, timeFilterQuery, limit)
     }
   } else if ('type' in filters) {
-    return await searchEventsByType(dynamoDB, config, logger, filters.type, timeFilterQuery)
+    return await searchEventsByType(dynamoDB, config, filters.type, timeFilterQuery, limit)
   } else {
     throw new Error('Invalid search event query. It is neither an search by "entity" nor a search by "type"')
   }
@@ -89,16 +93,18 @@ async function executeSearch(
 async function searchEventsByEntityAndID(
   dynamoDB: DynamoDB.DocumentClient,
   config: BoosterConfig,
-  logger: Logger,
   entity: string,
   entityID: UUID,
-  timeQuery: TimeQueryData
+  timeQuery: TimeQueryData,
+  limit?: number
 ): Promise<Array<EventEnvelope>> {
+  const logger = getLogger(config, 'events-searcher-adapter#searchEventsByEntityAndID')
   // TODO: Manage pagination
   const params: DocumentClient.QueryInput = {
     TableName: config.resourceNames.eventsStore,
     ConsistentRead: true,
     ScanIndexForward: false, // Descending order (newer timestamps first)
+    Limit: limit,
     KeyConditionExpression: `${eventsStoreAttributes.partitionKey} = :partitionKey${timeQuery.expression}`,
     ExpressionAttributeValues: {
       ...timeQuery.attributeValues,
@@ -119,16 +125,18 @@ interface EventStoreKeys {
 async function searchEventsByEntity(
   dynamoDB: DynamoDB.DocumentClient,
   config: BoosterConfig,
-  logger: Logger,
   entity: string,
-  timeQuery: TimeQueryData
+  timeQuery: TimeQueryData,
+  limit?: number
 ): Promise<Array<EventEnvelope>> {
+  const logger = getLogger(config, 'events-searcher-adapter#searchEventsByEntity')
   // TODO: manage pagination
   // First query the index
   const params: DocumentClient.QueryInput = {
     TableName: config.resourceNames.eventsStore,
     IndexName: eventsStoreAttributes.indexByEntity.name(config),
     ScanIndexForward: false, // Descending order (newer timestamps first)
+    Limit: limit,
     KeyConditionExpression: `${eventsStoreAttributes.indexByEntity.partitionKey} = :partitionKey${timeQuery.expression}`,
     ExpressionAttributeValues: {
       ...timeQuery.attributeValues,
@@ -139,22 +147,24 @@ async function searchEventsByEntity(
   logger.debug('Searching events by entity. Index query params: ', params)
   const partialResult = await dynamoDB.query(params).promise()
   const indexRecords = (partialResult.Items as Array<EventStoreKeys>) ?? []
-  return findEventsDataWithKeys(dynamoDB, config, logger, indexRecords)
+  return findEventsDataWithKeys(dynamoDB, config, indexRecords)
 }
 
 async function searchEventsByType(
   dynamoDB: DynamoDB.DocumentClient,
   config: BoosterConfig,
-  logger: Logger,
   type: string,
-  timeQuery: TimeQueryData
+  timeQuery: TimeQueryData,
+  limit?: number
 ): Promise<Array<EventEnvelope>> {
+  const logger = getLogger(config, 'events-searcher-adapter#searchEventsByType')
   // TODO: manage pagination
   // Fist query the index
   const params: DocumentClient.QueryInput = {
     TableName: config.resourceNames.eventsStore,
     IndexName: eventsStoreAttributes.indexByType.name(config),
     ScanIndexForward: false, // Descending order (newer timestamps first)
+    Limit: limit,
     KeyConditionExpression: `${eventsStoreAttributes.indexByType.partitionKey} = :partitionKey${timeQuery.expression}`,
     ExpressionAttributeValues: {
       ...timeQuery.attributeValues,
@@ -165,21 +175,21 @@ async function searchEventsByType(
   logger.debug('Searching events by type. Index query params: ', params)
   const partialResult = await dynamoDB.query(params).promise()
   const indexRecords = (partialResult.Items as Array<EventStoreKeys>) ?? []
-  return findEventsDataWithKeys(dynamoDB, config, logger, indexRecords)
+  return findEventsDataWithKeys(dynamoDB, config, indexRecords)
 }
 
 async function findEventsDataWithKeys(
   dynamoDB: DynamoDB.DocumentClient,
   config: BoosterConfig,
-  logger: Logger,
   keys: Array<EventStoreKeys>
 ): Promise<Array<EventEnvelope>> {
+  const logger = getLogger(config, 'events-searcher-adapter#findEventsDataWithKeys')
   const result: Array<EventEnvelope> = []
 
   const keysBatches = inChunksOf(dynamoDbBatchGetLimit, keys)
   logger.debug(`Performing batch get for ${keysBatches.length} batches`)
   for (const keysBatch of keysBatches) {
-    const batchResult = await performBatchGet(dynamoDB, config, logger, keysBatch)
+    const batchResult = await performBatchGet(dynamoDB, config, keysBatch)
     result.push(...batchResult)
   }
 
@@ -189,9 +199,9 @@ async function findEventsDataWithKeys(
 async function performBatchGet(
   dynamoDB: DynamoDB.DocumentClient,
   config: BoosterConfig,
-  logger: Logger,
   keys: Array<EventStoreKeys>
 ): Promise<Array<EventEnvelope>> {
+  const logger = getLogger(config, 'events-searcher-adapter#performBatchGet')
   const params: DocumentClient.BatchGetItemInput = {
     RequestItems: {
       [config.resourceNames.eventsStore]: {
@@ -219,6 +229,7 @@ function convertToSearchResult(eventEnvelopes: Array<EventEnvelope>): Array<Even
   // The result of this query is paginated and the absolute order of items is respected.
   // - Another one to the master table to get the items data. This query is made with "batchQueryItems", which
   // does not preserve the order in which we specify the keys. This is why we need to sort the final result.
+  // It affects also to the limit that could only be applied to the ordered elements
   return eventEnvelopes
     .map((eventEnvelope) => {
       return {

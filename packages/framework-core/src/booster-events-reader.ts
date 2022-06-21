@@ -1,21 +1,21 @@
 import {
   EventSearchRequest,
   BoosterConfig,
-  Logger,
   NotAuthorizedError,
   EventSearchResponse,
   NotFoundError,
   EntityMetadata,
   InvalidParameterError,
-  EventFilter,
-  EventFilterByEntity,
-  EventFilterByType,
+  EventSearchParameters,
+  EventParametersFilterByEntity,
+  EventParametersFilterByType,
 } from '@boostercloud/framework-types'
+import { getLogger } from '@boostercloud/framework-common-helpers'
 import { BoosterAuth } from './booster-auth'
 import { Booster } from './booster'
 
 export class BoosterEventsReader {
-  public constructor(readonly config: BoosterConfig, readonly logger: Logger) {}
+  public constructor(readonly config: BoosterConfig) {}
 
   public async fetch(eventRequest: EventSearchRequest): Promise<Array<EventSearchResponse>> {
     this.validateRequest(eventRequest)
@@ -23,7 +23,8 @@ export class BoosterEventsReader {
   }
 
   private validateRequest(eventRequest: EventSearchRequest): void {
-    this.logger.debug('Validating the following event request: ', eventRequest)
+    const logger = getLogger(this.config, 'BoosterEventsReader#validateRequest')
+    logger.debug('Validating the following event request: ', eventRequest)
     const entityMetadata = this.entityMetadataFromRequest(eventRequest)
 
     if (!BoosterAuth.isUserAuthorized(entityMetadata.authorizeReadEvents, eventRequest.currentUser)) {
@@ -32,22 +33,22 @@ export class BoosterEventsReader {
   }
 
   private entityMetadataFromRequest(eventRequest: EventSearchRequest): EntityMetadata {
-    const { filters } = eventRequest
-    if (!isByEntitySearch(filters) && !isByEventTypeSearch(filters)) {
+    const { parameters } = eventRequest
+    if (!isByEntitySearch(parameters) && !isByEventTypeSearch(parameters)) {
       throw new InvalidParameterError(
         'Invalid event search request. It should contain either "type" or "entity" field, but it included none'
       )
     }
-    if (isByEntitySearch(filters) && isByEventTypeSearch(filters)) {
+    if (isByEntitySearch(parameters) && isByEventTypeSearch(parameters)) {
       throw new InvalidParameterError(
         'Invalid event search request. It should contain either "type" or "entity" field, but it included both'
       )
     }
-    if (isByEntitySearch(filters)) {
-      return this.entityMetadataFromEntityName(filters.entity)
+    if (isByEntitySearch(parameters)) {
+      return this.entityMetadataFromEntityName(parameters.entity)
     }
-    if (isByEventTypeSearch(filters)) {
-      return this.entityMetadataFromEventName(filters.type)
+    if (isByEventTypeSearch(parameters)) {
+      return this.entityMetadataFromEventName(parameters.type)
     }
     // We would never reach this point
     throw new InvalidParameterError('Could not determine event search kind')
@@ -72,14 +73,14 @@ export class BoosterEventsReader {
   }
 
   private async processFetch(eventRequest: EventSearchRequest): Promise<Array<EventSearchResponse>> {
-    return Booster.events(eventRequest.filters)
+    return Booster.events(eventRequest.parameters)
   }
 }
 
-function isByEntitySearch(filters: EventFilter): filters is EventFilterByEntity {
-  return 'entity' in filters
+function isByEntitySearch(parameters: EventSearchParameters): parameters is EventParametersFilterByEntity {
+  return 'entity' in parameters
 }
 
-function isByEventTypeSearch(filters: EventFilter): filters is EventFilterByType {
-  return 'type' in filters
+function isByEventTypeSearch(parameters: EventSearchParameters): parameters is EventParametersFilterByType {
+  return 'type' in parameters
 }

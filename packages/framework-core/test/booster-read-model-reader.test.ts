@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { expect } from './expect'
 import {
-  Logger,
   InvalidParameterError,
   UUID,
   ReadModelRequestEnvelope,
@@ -17,12 +16,6 @@ import { BoosterReadModelsReader } from '../src/booster-read-models-reader'
 import { random, internet } from 'faker'
 import { BoosterAuth } from '../src/booster-auth'
 import { Booster } from '../src/booster'
-
-const logger: Logger = {
-  debug() {},
-  info() {},
-  error() {},
-}
 
 describe('BoosterReadModelReader', () => {
   const config = new BoosterConfig('test')
@@ -52,7 +45,7 @@ describe('BoosterReadModelReader', () => {
   // Why sorting by salmon? Salmons are fun! https://youtu.be/dDj7DuHVV9E
   config.readModelSequenceKeys[SequencedReadModel.name] = 'salmon'
 
-  const readModelReader = new BoosterReadModelsReader(config, logger)
+  const readModelReader = new BoosterReadModelsReader(config)
 
   const noopGraphQLOperation: GraphQLOperation = {
     query: '',
@@ -106,7 +99,7 @@ describe('BoosterReadModelReader', () => {
           validateByIdRequest({
             version: 1,
             class: TestReadModel,
-            currentUser: { id: '666', username: 'root', role: 'root' },
+            currentUser: { id: '666', username: 'root', roles: ['root'] },
             key: {
               id: 'π',
               sequenceKey: { name: 'salmon', value: 'sammy' },
@@ -121,7 +114,7 @@ describe('BoosterReadModelReader', () => {
           validateByIdRequest({
             version: 1,
             class: TestReadModel,
-            currentUser: { id: '666', username: 'root', role: 'root' },
+            currentUser: { id: '666', username: 'root', roles: ['root'] },
           })
         }).not.to.throw()
       })
@@ -132,7 +125,7 @@ describe('BoosterReadModelReader', () => {
           validateByIdRequest({
             version: 1,
             class: SequencedReadModel,
-            currentUser: { id: '666', username: 'root', role: 'root' },
+            currentUser: { id: '666', username: 'root', roles: ['root'] },
             key: {
               id: '§',
               sequenceKey: { name: 'salmon', value: 'sammy' },
@@ -235,7 +228,7 @@ describe('BoosterReadModelReader', () => {
         version: 1,
         currentUser: {
           username: internet.email(),
-          role: '',
+          roles: [''],
           claims: {},
         },
       }
@@ -260,7 +253,7 @@ describe('BoosterReadModelReader', () => {
 
     const currentUser = {
       username: internet.email(),
-      role: UserRole.name,
+      roles: [UserRole.name],
       claims: {},
     }
 
@@ -273,11 +266,11 @@ describe('BoosterReadModelReader', () => {
       currentUser,
     } as any
 
-    const beforeFn = (request: ReadModelRequestEnvelope<any>): ReadModelRequestEnvelope<any> => {
+    const beforeFn = async (request: ReadModelRequestEnvelope<any>): Promise<ReadModelRequestEnvelope<any>> => {
       return { ...request, filters: { id: { eq: request.filters.id } } }
     }
 
-    const beforeFnV2 = (request: ReadModelRequestEnvelope<any>): ReadModelRequestEnvelope<any> => {
+    const beforeFnV2 = async (request: ReadModelRequestEnvelope<any>): Promise<ReadModelRequestEnvelope<any>> => {
       return { ...request, filters: { id: { eq: request.currentUser?.username } } }
     }
 
@@ -306,9 +299,9 @@ describe('BoosterReadModelReader', () => {
 
         expect(providerSearcherFunctionFake).to.have.been.calledOnceWithExactly(
           match.any,
-          match.any,
           TestReadModel.name,
           filters,
+          {},
           undefined,
           undefined,
           false
@@ -340,8 +333,10 @@ describe('BoosterReadModelReader', () => {
         it('calls the before hook function', async () => {
           await readModelReader.search(envelope)
 
-          expect(beforeFnSpy).to.have.been.calledOnceWithExactly(envelope)
-          expect(beforeFnSpy).to.have.returned({ ...envelope, filters: { id: { eq: envelope.filters.id } } })
+          const currentUser = envelope.currentUser
+          expect(beforeFnSpy).to.have.been.calledOnceWithExactly(envelope, currentUser)
+          const expectedReturn = Promise.resolve({ ...envelope, filters: { id: { eq: envelope.filters.id } } })
+          expect(beforeFnSpy).to.have.returned(expectedReturn)
         })
       })
 
@@ -371,16 +366,18 @@ describe('BoosterReadModelReader', () => {
         it('chains the before hook functions when there is more than one', async () => {
           await readModelReader.search(envelope)
 
-          expect(beforeFnSpy).to.have.been.calledOnceWithExactly(envelope)
-          expect(beforeFnSpy).to.have.returned({ ...envelope, filters: { id: { eq: envelope.filters.id } } })
+          expect(beforeFnSpy).to.have.been.calledOnceWithExactly(envelope, envelope.currentUser)
+          const expectedReturn = Promise.resolve({ ...envelope, filters: { id: { eq: envelope.filters.id } } })
+          expect(beforeFnSpy).to.have.returned(expectedReturn)
 
-          const returnedEnvelope = beforeFnSpy.returnValues[0]
+          const returnedEnvelope = await beforeFnSpy.returnValues[0]
           expect(beforeFnV2Spy).to.have.been.calledAfter(beforeFnSpy)
-          expect(beforeFnV2Spy).to.have.been.calledOnceWithExactly(returnedEnvelope)
-          expect(beforeFnV2Spy).to.have.returned({
+          expect(beforeFnV2Spy).to.have.been.calledOnceWithExactly(returnedEnvelope, returnedEnvelope.currentUser)
+          const expectedReturnEnvelope = Promise.resolve({
             ...returnedEnvelope,
             filters: { id: { eq: returnedEnvelope.currentUser?.username } },
           })
+          expect(beforeFnV2Spy).to.have.returned(expectedReturnEnvelope)
         })
       })
     })
@@ -463,12 +460,7 @@ describe('BoosterReadModelReader', () => {
       const subscriptionID = random.uuid()
       await readModelReader.unsubscribe(connectionID, subscriptionID)
 
-      expect(deleteSubscriptionFake).to.have.been.calledOnceWithExactly(
-        match.any,
-        match.any,
-        connectionID,
-        subscriptionID
-      )
+      expect(deleteSubscriptionFake).to.have.been.calledOnceWithExactly(match.any, connectionID, subscriptionID)
     })
   })
 
@@ -479,7 +471,7 @@ describe('BoosterReadModelReader', () => {
       const connectionID = random.uuid()
       await readModelReader.unsubscribeAll(connectionID)
 
-      expect(deleteAllSubscriptionsFake).to.have.been.calledOnceWithExactly(match.any, match.any, connectionID)
+      expect(deleteAllSubscriptionsFake).to.have.been.calledOnceWithExactly(match.any, connectionID)
     })
   })
 })

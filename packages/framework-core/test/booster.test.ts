@@ -6,7 +6,7 @@ import { replace, fake, restore, match, replaceGetter } from 'sinon'
 import { Importer } from '../src/importer'
 import {
   BoosterConfig,
-  EventFilterByType,
+  EventParametersFilterByType,
   EventInterface,
   EventSearchResponse,
   ProviderLibrary,
@@ -76,9 +76,9 @@ describe('the `Booster` class', () => {
       await Booster.readModel(TestReadModel).search()
       expect(searcherFunctionFake).to.have.been.calledOnceWithExactly(
         match.any,
-        match.any,
         TestReadModel.name,
         match.any,
+        {},
         undefined,
         undefined,
         false
@@ -100,6 +100,20 @@ describe('the `Booster` class', () => {
         expect(readModel.getId()).to.not.throw
       }
       expect(searcherFunctionFake).to.have.been.calledOnce
+    })
+  })
+  describe('the `entitiesIDs` method', () => {
+    it('has an instance method', async () => {
+      const providerSearchEntitiesIds = fake.returns([])
+      Booster.configureCurrentEnv((config) => {
+        config.provider = {
+          events: {
+            searchEntitiesIDs: providerSearchEntitiesIds,
+          },
+        } as unknown as ProviderLibrary
+      })
+      await Booster.entitiesIDs('TestEvent', 1, undefined)
+      expect(providerSearchEntitiesIds).to.have.been.calledOnce
     })
   })
   describe('the `event` method', () => {
@@ -157,9 +171,10 @@ describe('the `Booster` class', () => {
         config.events[BestEvent.name] = { class: BestEvent }
       })
 
-      const eventFilterByType: EventFilterByType = {
+      const eventFilterByType: EventParametersFilterByType = {
         type: TestEvent.name,
       }
+
       const events = await Booster.events(eventFilterByType)
 
       for (const event of events) {

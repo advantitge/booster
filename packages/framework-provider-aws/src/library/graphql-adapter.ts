@@ -1,10 +1,12 @@
 import { APIGatewayProxyEvent } from 'aws-lambda'
-import { GraphQLRequestEnvelope, GraphQLRequestEnvelopeError, Logger } from '@boostercloud/framework-types'
+import { BoosterConfig, GraphQLRequestEnvelope, GraphQLRequestEnvelopeError } from '@boostercloud/framework-types'
+import { getLogger } from '@boostercloud/framework-common-helpers'
 
 export async function rawGraphQLRequestToEnvelope(
-  request: APIGatewayProxyEvent,
-  logger: Logger
+  config: BoosterConfig,
+  request: APIGatewayProxyEvent
 ): Promise<GraphQLRequestEnvelope | GraphQLRequestEnvelopeError> {
+  const logger = getLogger(config, 'graphql-adapter#rawGraphQLRequestToEnvelope')
   logger.debug('Received GraphQL request: ', request)
   const requestID = request.requestContext.requestId
   const eventType = (request.requestContext.eventType as GraphQLRequestEnvelope['eventType']) ?? 'MESSAGE'
@@ -21,13 +23,28 @@ export async function rawGraphQLRequestToEnvelope(
       connectionID,
       token: request.headers?.Authorization,
       value: graphQLValue,
+      context: {
+        request: {
+          headers: request.headers,
+          body: request.body,
+        },
+        rawContext: request,
+      },
     }
   } catch (e) {
+    const error = e as Error
     return {
-      error: e,
+      error,
       requestID,
       connectionID,
       eventType,
+      context: {
+        request: {
+          headers: request.headers,
+          body: request.body,
+        },
+        rawContext: request,
+      },
     }
   }
 }

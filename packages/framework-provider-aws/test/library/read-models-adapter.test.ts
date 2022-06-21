@@ -10,17 +10,11 @@ import {
 import { DynamoDB } from 'aws-sdk'
 import {
   BoosterConfig,
-  Logger,
   OptimisticConcurrencyUnexpectedVersionError,
   ReadModelEnvelope,
 } from '@boostercloud/framework-types'
 import { DynamoDBStreamEvent } from 'aws-lambda'
 
-const logger: Logger = {
-  info: fake(),
-  error: fake(),
-  debug: fake(),
-}
 describe('the "rawReadModelEventsToEnvelopes" method', () => {
   const config = new BoosterConfig('test')
   config.appName = 'test-app'
@@ -40,7 +34,7 @@ describe('the "rawReadModelEventsToEnvelopes" method', () => {
         },
       ],
     }
-    await expect(rawReadModelEventsToEnvelopes(config, logger, events)).to.be.eventually.rejectedWith(
+    await expect(rawReadModelEventsToEnvelopes(config, events)).to.be.eventually.rejectedWith(
       /Received a DynamoDB stream event without/
     )
   })
@@ -60,7 +54,7 @@ describe('the "rawReadModelEventsToEnvelopes" method', () => {
         },
       ],
     }
-    await expect(rawReadModelEventsToEnvelopes(config, logger, events)).to.be.eventually.rejectedWith(
+    await expect(rawReadModelEventsToEnvelopes(config, events)).to.be.eventually.rejectedWith(
       /Received a DynamoDB stream event without/
     )
   })
@@ -103,7 +97,7 @@ describe('the "rawReadModelEventsToEnvelopes" method', () => {
         },
       ],
     }
-    await expect(rawReadModelEventsToEnvelopes(config, logger, events)).to.eventually.become([
+    await expect(rawReadModelEventsToEnvelopes(config, events)).to.eventually.become([
       expectedReadModelOne,
       expectedReadModelTwo,
     ])
@@ -124,9 +118,9 @@ describe('the "fetchReadModel" method', () => {
           })
         )
 
-        await expect(
-          fetchReadModel(db, config, logger, 'SomeReadModel', 'someReadModelID')
-        ).to.be.eventually.rejectedWith('not found')
+        await expect(fetchReadModel(db, config, 'SomeReadModel', 'someReadModelID')).to.be.eventually.rejectedWith(
+          'not found'
+        )
 
         expect(db.query).to.have.been.calledOnceWith({
           TableName: 'new-booster-app-app-SomeReadModel',
@@ -155,7 +149,7 @@ describe('the "fetchReadModel" method', () => {
         )
 
         await expect(
-          fetchReadModel(db, config, logger, 'SomeReadModel', 'someReadModelID', { name: 'asdf', value: '42' })
+          fetchReadModel(db, config, 'SomeReadModel', 'someReadModelID', { name: 'asdf', value: '42' })
         ).to.be.eventually.rejectedWith('not found')
 
         expect(db.query).to.have.been.calledOnceWith({
@@ -188,7 +182,7 @@ describe('the "fetchReadModel" method', () => {
           })
         )
 
-        const results = await fetchReadModel(db, config, logger, 'SomeReadModel', 'someReadModelID')
+        const results = await fetchReadModel(db, config, 'SomeReadModel', 'someReadModelID')
 
         expect(db.query).to.have.been.calledOnceWith({
           TableName: 'new-booster-app-app-SomeReadModel',
@@ -224,7 +218,7 @@ describe('the "fetchReadModel" method', () => {
           })
         )
 
-        const results = await fetchReadModel(db, config, logger, 'SomeReadModel', 'someReadModelID', {
+        const results = await fetchReadModel(db, config, 'SomeReadModel', 'someReadModelID', {
           name: 'time',
           value: '42',
         })
@@ -274,7 +268,7 @@ describe('the "storeReadModel" method', () => {
       })
     )
 
-    const something = await storeReadModel(db, config, logger, 'SomeReadModel', { id: 777, some: 'object' } as any, 0)
+    const something = await storeReadModel(db, config, 'SomeReadModel', { id: 777, some: 'object' } as any, 0)
 
     expect(db.put).to.have.been.calledOnceWithExactly({
       TableName: 'new-booster-app-app-SomeReadModel',
@@ -300,7 +294,7 @@ describe('the "storeReadModel" method', () => {
     )
 
     await expect(
-      storeReadModel(db, config, logger, 'SomeReadModel', { id: 777, some: 'object' } as any, 0)
+      storeReadModel(db, config, 'SomeReadModel', { id: 777, some: 'object' } as any, 0)
     ).to.eventually.be.rejectedWith(OptimisticConcurrencyUnexpectedVersionError)
   })
 })
@@ -320,7 +314,7 @@ describe('the "deleteReadModel"', () => {
         })
       )
 
-      await deleteReadModel(db, config, logger, 'SomeReadModel', { id: 777, some: 'object' } as any)
+      await deleteReadModel(db, config, 'SomeReadModel', { id: 777, some: 'object' } as any)
 
       expect(db.delete).to.have.been.calledOnceWithExactly({
         TableName: 'new-booster-app-app-SomeReadModel',
@@ -345,7 +339,7 @@ describe('the "deleteReadModel"', () => {
         })
       )
 
-      await deleteReadModel(db, config, logger, readModelName, { id: '777', time: '42', some: 'object' } as any)
+      await deleteReadModel(db, config, readModelName, { id: '777', time: '42', some: 'object' } as any)
 
       expect(db.delete).to.have.been.calledOnceWithExactly({
         TableName: 'new-booster-app-app-SomeReadModel',

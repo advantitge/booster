@@ -19,10 +19,13 @@ before(async () => {
   await overrideWithBoosterLocalDependencies(sandboxPath)
 
   console.log('installing dependencies...')
-  await runCommand(sandboxPath, 'npm install')
+  await runCommand(sandboxPath, 'npm install --production --no-bin-links --no-optional')
 
   console.log(`starting local server in ${sandboxPath}...`)
   serverProcess = start(sandboxPath, 'local')
+  if (!serverProcess.pid) {
+    throw new Error('Pid not found')
+  }
   storePIDFor(sandboxPath, serverProcess.pid) //store pid to kill process on stop
   await sleep(2000)
   console.log('local server ready')

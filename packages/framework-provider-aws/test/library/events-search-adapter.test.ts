@@ -4,11 +4,10 @@ import { createStubInstance, restore, SinonStubbedInstance, fake, replace } from
 import {
   BoosterConfig,
   EventEnvelope,
-  EventFilter,
-  EventFilterByEntity,
-  EventFilterByType,
+  EventParametersFilterByEntity,
+  EventParametersFilterByType,
+  EventSearchParameters,
   EventSearchResponse,
-  Logger,
 } from '@boostercloud/framework-types'
 import { random, date } from 'faker'
 import { DynamoDB } from 'aws-sdk'
@@ -20,7 +19,6 @@ import rewire = require('rewire')
 
 describe('Events searcher adapter', () => {
   const config: BoosterConfig = new BoosterConfig('test')
-  const logger: Logger = console
   let db: SinonStubbedInstance<DynamoDB.DocumentClient>
   beforeEach(() => {
     db = createStubInstance(DynamoDB.DocumentClient, {
@@ -42,11 +40,11 @@ describe('Events searcher adapter', () => {
 
   describe('The "searchEvents" method', () => {
     it('throws an error when an invalid search is made', async () => {
-      await expect(searchEvents(db, config, logger, {} as never)).to.be.rejectedWith(/Invalid search event query/)
+      await expect(searchEvents(db, config, {} as never)).to.be.rejectedWith(/Invalid search event query/)
     })
 
     describe('for a search by entity with ID', () => {
-      let filter: EventFilterByEntity
+      let filter: EventParametersFilterByEntity
       let entityID: string
       beforeEach(() => {
         entityID = random.uuid()
@@ -63,6 +61,7 @@ describe('Events searcher adapter', () => {
             TableName: config.resourceNames.eventsStore,
             ConsistentRead: true,
             ScanIndexForward: false,
+            Limit: undefined,
             KeyConditionExpression: `${eventsStoreAttributes.partitionKey} = :partitionKey`,
             ExpressionAttributeValues: { ':partitionKey': partitionKeyForEvent(filter.entity, entityID) },
           }
@@ -71,7 +70,7 @@ describe('Events searcher adapter', () => {
     })
 
     describe('for a search by entity and no ID', () => {
-      let filter: EventFilterByEntity
+      let filter: EventParametersFilterByEntity
       beforeEach(() => {
         filter = {
           entity: random.alpha(),
@@ -85,6 +84,7 @@ describe('Events searcher adapter', () => {
             TableName: config.resourceNames.eventsStore,
             IndexName: eventsStoreAttributes.indexByEntity.name(config),
             ScanIndexForward: false,
+            Limit: undefined,
             KeyConditionExpression: `${eventsStoreAttributes.indexByEntity.partitionKey} = :partitionKey`,
             ExpressionAttributeValues: {
               ':partitionKey': partitionKeyForIndexByEntity(filter.entity, 'event'),
@@ -96,7 +96,7 @@ describe('Events searcher adapter', () => {
     })
 
     describe('for a search by type', () => {
-      let filter: EventFilterByType
+      let filter: EventParametersFilterByType
       beforeEach(() => {
         filter = {
           type: random.alpha(),
@@ -110,6 +110,7 @@ describe('Events searcher adapter', () => {
             TableName: config.resourceNames.eventsStore,
             IndexName: eventsStoreAttributes.indexByType.name(config),
             ScanIndexForward: false,
+            Limit: undefined,
             KeyConditionExpression: `${eventsStoreAttributes.indexByType.partitionKey} = :partitionKey`,
             ExpressionAttributeValues: {
               ':partitionKey': filter.type,
@@ -122,19 +123,39 @@ describe('Events searcher adapter', () => {
   })
 
   function runQueryTestsWithTimeFiltersVariants(
-    getFilters: () => EventFilter,
+    getFilters: () => EventSearchParameters,
     getQuery: () => DocumentClient.QueryInput,
     requiresExtraQueryToMainTable = false
   ): void {
     context('with no time filters', () => {
-      it('does the right query', async () => {
-        await searchEvents(db, config, logger, getFilters())
+      it('does the query with no time filters', async () => {
+        await searchEvents(db, config, getFilters())
         expect(db.query).to.have.been.calledWithExactly(getQuery())
       })
     })
 
+    context('with "from" time filter and limit', () => {
+      let filterWithFrom: EventSearchParameters
+      let queryWithFromTimeAdditions: DocumentClient.QueryInput
+      beforeEach(() => {
+        filterWithFrom = getFilters()
+        filterWithFrom.from = date.recent().toISOString()
+        filterWithFrom.limit = 3
+
+        queryWithFromTimeAdditions = getQuery()
+        queryWithFromTimeAdditions.KeyConditionExpression += ` AND ${eventsStoreAttributes.sortKey} >= :fromTime`
+        queryWithFromTimeAdditions.ExpressionAttributeValues![':fromTime'] = filterWithFrom.from
+        queryWithFromTimeAdditions.Limit = filterWithFrom.limit
+      })
+
+      it('does the query with "from" time filter and limit', async () => {
+        await searchEvents(db, config, filterWithFrom)
+        expect(db.query).to.have.been.calledWithExactly(queryWithFromTimeAdditions)
+      })
+    })
+
     context('with "from" time filter', () => {
-      let filterWithFrom: EventFilter
+      let filterWithFrom: EventSearchParameters
       let queryWithFromTimeAdditions: DocumentClient.QueryInput
       beforeEach(() => {
         filterWithFrom = getFilters()
@@ -145,14 +166,14 @@ describe('Events searcher adapter', () => {
         queryWithFromTimeAdditions.ExpressionAttributeValues![':fromTime'] = filterWithFrom.from
       })
 
-      it('does the right query', async () => {
-        await searchEvents(db, config, logger, filterWithFrom)
+      it('does the query with "from" time filter', async () => {
+        await searchEvents(db, config, filterWithFrom)
         expect(db.query).to.have.been.calledWithExactly(queryWithFromTimeAdditions)
       })
     })
 
     context('with "to" time filters', () => {
-      let filterWithTo: EventFilter
+      let filterWithTo: EventSearchParameters
       let queryWithToTimeAdditions: DocumentClient.QueryInput
       beforeEach(() => {
         filterWithTo = getFilters()
@@ -163,14 +184,14 @@ describe('Events searcher adapter', () => {
         queryWithToTimeAdditions.ExpressionAttributeValues![':toTime'] = filterWithTo.to
       })
 
-      it('does the right query', async () => {
-        await searchEvents(db, config, logger, filterWithTo)
+      it('does the query with "to" time filters', async () => {
+        await searchEvents(db, config, filterWithTo)
         expect(db.query).to.have.been.calledWithExactly(queryWithToTimeAdditions)
       })
     })
 
     context('with both time filters', () => {
-      let fullFilter: EventFilter
+      let fullFilter: EventSearchParameters
       let fullQuery: DocumentClient.QueryInput
       beforeEach(() => {
         fullFilter = getFilters()
@@ -183,8 +204,8 @@ describe('Events searcher adapter', () => {
         fullQuery.ExpressionAttributeValues![':toTime'] = fullFilter.to
       })
 
-      it('does the right query', async () => {
-        await searchEvents(db, config, logger, fullFilter)
+      it('does the query with both time filters', async () => {
+        await searchEvents(db, config, fullFilter)
         expect(db.query).to.have.been.calledWithExactly(fullQuery)
       })
     })
@@ -212,7 +233,7 @@ describe('Events searcher adapter', () => {
           }) as any
         )
 
-        await searchEvents(db, config, logger, getFilters())
+        await searchEvents(db, config, getFilters())
         expect(db.batchGet).to.have.been.calledWithExactly({
           RequestItems: {
             [config.resourceNames.eventsStore]: {
@@ -261,7 +282,7 @@ describe('Events searcher adapter', () => {
           occurredFirstID,
         ])
 
-        const res: Array<EventSearchResponse> = await rewiredModule.searchEvents(db, config, logger, getFilters())
+        const res: Array<EventSearchResponse> = await rewiredModule.searchEvents(db, config, getFilters())
         console.log(res)
 
         // Check they are sorted
@@ -284,6 +305,7 @@ function buildEventEnvelope(id: string, createdAt: string): EventEnvelope {
     entityTypeName: random.alpha(),
     typeName: random.alpha(),
     kind: 'event',
+    superKind: 'domain',
     version: random.number(),
   }
 }

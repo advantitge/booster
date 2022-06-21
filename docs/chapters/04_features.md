@@ -21,6 +21,72 @@ boost start -e local
 
 Where `local` is one of your defined environments with the `Booster.configure` call.
 
+## Logging in Booster
+
+If no configuration is provided, Booster uses the default JavaScript logging capabilities. Depending on the log level, it will call to `console.debug`, `console.info`, `console.warn` or `console.error`. In this regard, there's no distinction from any other node process and you'll find the logs in your cloud provider's default log aggregator (i.e. Cloudwatch if you use AWS).
+
+### Advanced logging
+
+If you need advanced logging capabilities such as redirecting your logs to a log aggregator, Booster also supports overriding the default behavior by providing custom loggers. The only thing you need to do is to provide an object that implements the `Logger` interface at config time:
+
+_The Logger interface (In package `@boostercloud/framework-types`):_
+```typescript
+interface Logger {
+  debug(message?: any, ...optionalParams: any[]): void
+  info(message?: any, ...optionalParams: any[]): void
+  warn(message?: any, ...optionalParams: any[]): void
+  error(message?: any, ...optionalParams: any[]): void
+}
+```
+
+You can set your logger, as well as the log level and your preferred log prefix (Defaults to the string `'Booster'`) in your `config.ts` file for each of your environments:
+
+_In your project's config.ts file:_
+```typescript
+Booster.configure('development', (config: BoosterConfig): void => {
+  config.appName = 'my-store'
+  config.providerPackage = '@boostercloud/framework-provider-aws'
+  
+  config.logger = new MyCustomLogger() // Overrides the default logger object
+  config.logLevel = Level.debug        // Sets the log level at 'debug'     
+  config.logPrefix = 'my-store-dev'    // Sets the default prefix
+})
+```
+
+### Using the Booster's logger
+
+All framework's components will use this logger by default and will generate logs that match the following pattern:
+
+```
+[<logPrefix>]|moduleName: <message>
+```
+
+You can get a custom logger instance that extends the configured logger by adding your moduleName and optionally overriding the configured prefix with the `getLogger` helper function. It's a good practice to build and use a separate logger instance built with this method for each context, as this will make it easier to filter your logs when you need to investigate a problem.
+
+_Example: Obtaining a logger for your command:_
+```typescript
+@Command({
+  authorize: [User],
+})
+export class UpdateShippingAddress {
+  public constructor(readonly cartId: UUID, readonly address: Address) {}
+
+  public static async handle(command: UpdateShippingAddress, register: Register): Promise<void> {
+    const logger = getLogger(Booster.config, 'UpdateShippingCommand#handler', 'MyApp')
+    logger.debug(`User ${register.currentUser?.username} changed shipping address for cart ${command.cartId}: ${JSON.stringify(command.address}`)
+    register.events(new ShippingAddressUpdated(command.cartId, command.address))
+  }
+}
+
+```
+
+When a `UpdateShippingAddress` command is handled, it wil log messages that look like the following:
+```
+[MyApp]|UpdateShippingCommand#handler: User buyer42 changed shipping address for cart 314: { street: '13th rue del percebe', number: 6, ... }
+```
+
+Using the configured Booster logger is not mandatory for your application, but it might be convenient to centralize your logs and this is a standard way to do it.
+
 ## Authentication and Authorization
 
 First of all, you need to know that the authorization in Booster is done through roles. Every Command and ReadModel has an authorize policy that tells Booster who can execute or access it. It consists of one of the following two values:
@@ -883,6 +949,8 @@ query {
 }
 ```
 
+Note: `eq` and `ne` are valid filters for checking if a field value is null or not null.
+
 ##### Array filters
 
 | Filter   | Value  |             Description |
@@ -918,6 +986,25 @@ Example:
 ```graphql
 query {
   CartReadModels(filter: { or: [{ id: { contains: "a" } }, { id: { contains: "b" } }] }) {
+    id
+    price
+    itemsIds
+  }
+}
+```
+
+##### IsDefined operator
+
+
+| Filter    |    Value    |         Description |
+|:----------|:-----------:|--------------------:|
+| isDefined | true/false  | field exists or not |
+
+Example:
+
+```graphql
+query {
+  CartReadModels(filter: { price: { isDefined: true } }) {
     id
     price
     itemsIds
@@ -961,6 +1048,47 @@ export class GetProductsCount {
 
 > **Warning**: Notice that `ReadModel`s are eventually consistent objects that are calculated as all events in all entities that affect the read model are settled. You should not assume that a read model is a proper source of truth, so you shouldn't use this feature for data validations. If you need to query the most up-to-date current state, consider fetching your Entities, instead of ReadModels, with `Booster.entity`
 
+#### Using sorting
+
+Booster allows you to sort your read models data in your commands handlers and event handlers using the `Booster.readModel` method.
+
+For example, you can sort and get the products in your commands like this:
+
+```graphql
+{
+  ListCartReadModels(filter: {}, limit: 5, sortBy: {
+    shippingAddress: {
+      firstName: ASC
+    }
+  }) {
+    items {
+      id
+      cartItems 
+      checks
+      shippingAddress {
+        firstName
+      }
+      payment {
+        cartId
+      }
+      cartItemsIds
+    }
+    cursor
+  }
+}
+```
+
+This is a preview feature available only for some Providers and with some limitations:
+* Azure: 
+  * Sort by one field supported. 
+  * Nested fields supported. 
+  * Sort by more than one file: **unsupported**.
+* Local:
+  * Sort by one field supported.
+  * Nested fields supported.
+  * Sort by more than one file: **unsupported**.
+
+> **Warning**: It is not possible to sort by fields defined as Interface, only classes or primitives types.
 
 
 #### Using pagination
@@ -1305,6 +1433,162 @@ boost nuke -e <environment name>
 For a force delete without asking for confirmation, you can run `boost nuke -e <environment name> -f`.
 
 > [!ATTENTION] Be EXTRA CAUTIOUS with this option, all your application data will be irreversibly DELETED without confirmation.
+ 
+
+## Error handling
+
+Booster includes a global error handler annotation `@GlobalErrorHandler` that will catch all errors that are thrown by:
+* **Command Handling Errors**: Errors thrown by the `handle` method of the command.
+  **Program handling errors**: Errors thrown by the ScheduledCommand `handle` method.
+  **Event Handle errors**: Errors thrown by the `Event Handle` method.
+* **Reducer errors**: Errors thrown by the `@Reduces` method of the entity.
+* **Projection errors**: Errors thrown in the ReadModel `@Projects` method.
+* All errors: Errors thrown in any of the previous methods. This method will always be called, also when calling any of the above methods.
+
+You can trap and return new errors in any of these methods annotating a class with `@GlobalErrorHandler` and implementing the following methods:
+
+**Command handle errors**:
+```typescript
+onCommandHandlerError?(error: Error, command: CommandEnvelope): Promise<Error | undefined>
+```
+
+**Schedule handle errors**:
+```typescript
+onScheduledCommandHandlerError?(error: Error): Promise<Error | undefined>
+```
+
+**Event handler errors**:
+```typescript
+onDispatchEventHandlerError?(error: Error, eventInstance: EventInterface): Promise<Error | undefined>
+```
+
+**Reducer errors**:
+```typescript
+onReducerError?(error: Error, eventInstance: EventInterface, snapshotInstance: EntityInterface | null): Promise<Error | undefined>
+```
+
+**Projections errors**:
+```typescript
+onProjectionError?(error: Error, entity: EntityInterface, readModel: ReadModelInterface | undefined): Promise<Error | undefined>
+```
+
+**All errors**
+```typescript
+  onError?(error: Error | undefined): Promise<Error | undefined>
+```
+
+Example:
+```typescript
+@GlobalErrorHandler()
+export class AppErrorHandler {
+  public static async onCommandHandlerError(error: Error, command: CommandEnvelope): Promise<Error | undefined> {
+    return error
+  }
+
+  public static async onScheduledCommandHandlerError(error: Error): Promise<Error | undefined> {
+    return error
+  }
+
+  public static async onDispatchEventHandlerError(error: Error, eventInstance: EventInterface): Promise<Error | undefined> {
+    return error
+  }
+
+  public static async onReducerError(
+    error: Error,
+    eventInstance: EventInterface,
+    snapshotInstance: EntityInterface | null
+  ): Promise<Error | undefined> {
+    return error
+  }
+
+  public static async onProjectionError(
+    error: Error,
+    entity: EntityInterface,
+    readModel: ReadModelInterface | undefined
+  ): Promise<Error | undefined> {
+    return error
+  }
+
+  public static async onError(error: Error | undefined): Promise<Error | undefined> {
+    return error
+  }
+}
+```
+
+**Note**: if you want to ignore the error thrown, you can simply return `undefined` from the error handler.
+
+## Migrations
+
+
+### Schema migrations
+
+Booster handle classes annotated with `@Migrates` as **Schema migrations**. The migration process will update an existing object 
+from one version to the next one. 
+
+For example, to migrate a `Product` entity from version 1 to version 2 we need the following migration class: 
+
+```typescript
+@Migrates(Product)
+export class ProductMigration {
+  @ToVersion(2, { fromSchema: ProductV1, toSchema: ProductV2 })
+  public async changeNameFieldToDisplayName(old: ProductV1): Promise<ProductV2> {
+    return new ProductV2(
+      old.id,
+      old.sku,
+      old.name,
+      old.description,
+      old.price,
+      old.pictures,
+      old.deleted
+    )
+  }
+}
+```
+
+The `ProductV1` class is the old version of the `Product` object. You can keep your old clases in the same migration file, for example:
+
+```typescript
+class ProductV1 {
+  public constructor(
+    public id: UUID,
+    readonly sku: string,
+    readonly name: string,
+    readonly description: string,
+    readonly price: Money,
+    readonly pictures: Array<Picture>,
+    public deleted: boolean = false
+  ) {}
+}
+
+class ProductV2 extends Product {}
+```
+
+### Data migrations
+
+For migrating data use `Booster.migrateEntity`. This method will generate an internal event `BoosterEntityMigrated` before migrating the entity data.
+
+This method will receive the old entity name, the old entity id and the new entity that we will be persisted. This way, you can migrate an entity id or rename it.
+
+Example:
+
+```typescript
+  public static async handle(_command: CartDataMigrateCommand, _register: Register): Promise<Array<UUID>> {
+    const entitiesIdsResult = await Booster.entitiesIDs('Cart', 500, undefined)
+    const paginatedEntityIdResults = entitiesIdsResult.items
+
+    const carts = await Promise.all(
+      paginatedEntityIdResults.map(async (entity) => await Booster.entity(Cart, entity.entityID))
+    )
+    return await Promise.all(
+        carts.map(async (cart) => {
+          cart.cartItems[0].quantity = 100
+          const newCart = new Cart(cart.id, cart.cartItems, cart.shippingAddress, cart.checks)
+          await Booster.migrateEntity('Cart', validCart.id, newCart)
+          return validCart.id
+      })
+    )
+  }
+```
 
 ## Provider feature matrix
 
