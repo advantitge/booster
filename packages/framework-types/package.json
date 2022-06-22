@@ -44,7 +44,9 @@
     "fast-check": "2.17.0",
     "metadata-booster": "0.4.1",
     "mocha": "8.4.0",
+    "rimraf": "3.0.2",
     "sinon": "9.2.3",
-    "sinon-chai": "3.5.0"
+    "sinon-chai": "3.5.0",
+    "typescript": "4.5.4"
   }
 }
