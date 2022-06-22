@@ -155,9 +155,9 @@ export interface ConnectionDataEnvelope {
 
 export interface UserEnvelope {
   id?: string
-  username: string
-  roles: Array<string>
-  claims: Record<string, unknown>
+  username?: string
+  roles?: Array<string>
+  claims?: Record<string, unknown>
   header?: Record<string, unknown>
 }
 
