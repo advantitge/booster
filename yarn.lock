@@ -1948,6 +1948,7 @@ __metadata:
     sinon: 9.2.3
     sinon-chai: 3.5.0
     tslib: 2.3.1
+    typescript: 4.5.4
   languageName: unknown
   linkType: soft
 
@@ -2032,7 +2033,7 @@ __metadata:
     apollo-link-http: 1.5.17
     apollo-link-ws: 1.0.20
     apollo-utilities: 1.3.4
-    aws-sdk: 2.853.0
+    aws-sdk: ^2.848.0
     cross-fetch: 3.1.5
     faker: 5.1.0
     graphql: 15.8.0
@@ -2073,7 +2074,6 @@ __metadata:
     "@boostercloud/framework-provider-aws": ^0.29.2
     "@boostercloud/framework-types": ^0.29.2
     "@types/aws-lambda": 8.10.48
-    "@types/aws-sdk": 2.7.0
     "@types/faker": 5.1.5
     "@types/rewire": ^2.5.28
     aws-cdk: 1.99.0
@@ -2087,6 +2087,7 @@ __metadata:
     rimraf: 3.0.2
     sinon: 9.2.3
     sinon-chai: 3.5.0
+    typescript: 4.5.4
     velocityjs: ^2.0.0
   languageName: unknown
   linkType: soft
@@ -2101,7 +2102,7 @@ __metadata:
     "@types/chai-arrays": 2.0.0
     "@types/faker": 5.1.5
     "@types/rewire": ^2.5.28
-    aws-sdk: 2.853.0
+    aws-sdk: ^2.848.0
     chai: 4.2.0
     chai-arrays: ^2.2.0
     chai-as-promised: 7.1.1
@@ -2280,14 +2281,14 @@ __metadata:
 
 "@boostercloud/framework-provider-local@file:packages/framework-provider-local::locator=root%40workspace%3A.":
   version: 0.29.2
-  resolution: "@boostercloud/framework-provider-local@file:packages/framework-provider-local#packages/framework-provider-local::hash=6f6fc0&locator=root%40workspace%3A."
+  resolution: "@boostercloud/framework-provider-local@file:packages/framework-provider-local#packages/framework-provider-local::hash=f616d5&locator=root%40workspace%3A."
   dependencies:
     "@boostercloud/framework-common-helpers": ^0.29.2
     "@boostercloud/framework-types": ^0.29.2
     "@types/nedb": ^1.8.11
     nedb: ^1.8.0
     tslib: 2.3.1
-  checksum: 9e0ae35ab30fccb3aae1d332331a6ac7660082f41ea8b0f7ec3c60165c4d714c4b79523d17082491cd84f0e062c8e5551ca388bcd9abf432003cdabb33bfea8e
+  checksum: 8e00b1550f9a2924f918b06be900b2ef450f2bee4e6944acf794dfa6e71541c9e7f5845ffd2f1617744e181bee095a0e3c873fc80ea2b7351ec04d4e20f29698
   languageName: node
   linkType: hard
 
@@ -4302,15 +4303,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/aws-sdk@npm:2.7.0":
-  version: 2.7.0
-  resolution: "@types/aws-sdk@npm:2.7.0"
-  dependencies:
-    aws-sdk: "*"
-  checksum: 0ede5d854ebed5caddc33a1b7a856f31aa022f8887635851fd13a7dc69046774bbfb864891a0106d4be84fc7c3ab8c2a96bd5c10e99ccc3661fb12019ce47f7c
-  languageName: node
-  linkType: hard
-
 "@types/body-parser@npm:*, @types/body-parser@npm:1.19.2":
   version: 1.19.2
   resolution: "@types/body-parser@npm:1.19.2"
@@ -6050,7 +6042,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"aws-sdk@npm:*, aws-sdk@npm:^2.1096.0, aws-sdk@npm:^2.388.0, aws-sdk@npm:^2.848.0":
+"aws-sdk@npm:^2.1096.0, aws-sdk@npm:^2.388.0, aws-sdk@npm:^2.848.0":
   version: 2.1158.0
   resolution: "aws-sdk@npm:2.1158.0"
   dependencies:
@@ -6064,23 +6056,6 @@ __metadata:
     uuid: 8.0.0
     xml2js: 0.4.19
   checksum: 4d0c0655f08a2359b34b8111fe64ec7b26658d2404ec404cf23decaaa52c99696371a1f4991faccbee9f96602737bbeabfb7b43cc1e58dc1a84692080933fdc7
-  languageName: node
-  linkType: hard
-
-"aws-sdk@npm:2.853.0":
-  version: 2.853.0
-  resolution: "aws-sdk@npm:2.853.0"
-  dependencies:
-    buffer: 4.9.2
-    events: 1.1.1
-    ieee754: 1.1.13
-    jmespath: 0.15.0
-    querystring: 0.2.0
-    sax: 1.2.1
-    url: 0.10.3
-    uuid: 3.3.2
-    xml2js: 0.4.19
-  checksum: f870a22e7d8092ec65ab7118296c1bb0b24432f09b6ccd75cde4ca5f013a8c091aad1c8b73107d9b527fbca39762e2c51ba0186de997535c142c4744cbe5f99c
   languageName: node
   linkType: hard
 
@@ -11526,13 +11501,6 @@ __metadata:
   bin:
     jake: ./bin/cli.js
   checksum: 56c913ecf5a8d74325d0af9bc17a233bad50977438d44864d925bb6c45c946e0fee8c4c1f5fe2225471ef40df5222e943047982717ebff0d624770564d3c46ba
-  languageName: node
-  linkType: hard
-
-"jmespath@npm:0.15.0":
-  version: 0.15.0
-  resolution: "jmespath@npm:0.15.0"
-  checksum: 353bb9e69cc4c1560be0a4df43cb4020abc246e1c60cb5b55dcc76d8c858383f1633faf22ccaf6a5e09568a2077d0f4f1e989e6fcfd496b5cef87964cc8cb9e7
   languageName: node
   linkType: hard
 
@@ -18013,15 +17981,6 @@ __metadata:
   version: 1.0.1
   resolution: "utils-merge@npm:1.0.1"
   checksum: c81095493225ecfc28add49c106ca4f09cdf56bc66731aa8dabc2edbbccb1e1bfe2de6a115e5c6a380d3ea166d1636410b62ef216bb07b3feb1cfde1d95d5080
-  languageName: node
-  linkType: hard
-
-"uuid@npm:3.3.2":
-  version: 3.3.2
-  resolution: "uuid@npm:3.3.2"
-  bin:
-    uuid: ./bin/uuid
-  checksum: 8793629d2799f500aeea9fcd0aec6c4e9fbcc4d62ed42159ad96be345c3fffac1bbf61a23e18e2782600884fee05e6d4012ce4b70d0037c8e987533ae6a77870
   languageName: node
   linkType: hard
 
