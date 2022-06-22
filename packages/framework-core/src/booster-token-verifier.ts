@@ -6,88 +6,76 @@ import {
   TokenVerifierConfig,
   UserEnvelope,
 } from '@boostercloud/framework-types'
-
-import * as jwksRSA from 'jwks-rsa'
-import * as jwt from 'jsonwebtoken'
-import { NotBeforeError, TokenExpiredError } from 'jsonwebtoken'
+import {
+  JWTVerifyOptions,
+  JWTDecryptResult,
+  JWTVerifyResult,
+  createRemoteJWKSet,
+  importSPKI,
+  jwtVerify,
+  KeyLike,
+  jwtDecrypt,
+  errors,
+} from 'jose'
+import { URL } from 'url'
 
 class TokenVerifierClient {
-  private client?: jwksRSA.JwksClient
-  private options?: jwt.VerifyOptions
+  private jwks?: ReturnType<typeof createRemoteJWKSet>
+  private publicKey?: KeyLike
+  private options?: JWTVerifyOptions
 
   public constructor(private tokenVerifierConfig: TokenVerifierConfig) {
-    if (this.tokenVerifierConfig.jwksUri) {
-      this.client = jwksRSA({
-        jwksUri: this.tokenVerifierConfig.jwksUri,
-        cache: true,
-        cacheMaxAge: 15 * 60 * 1000, // 15 Minutes, at least to be equal to AWS max lambda limit runtime
-      })
+    if ('jwksUri' in this.tokenVerifierConfig) {
+      this.jwks = createRemoteJWKSet(new URL(this.tokenVerifierConfig.jwksUri))
     }
+    this.options = { issuer: this.tokenVerifierConfig.issuer }
+  }
 
-    this.options = {
-      algorithms: ['RS256'],
-      issuer: this.tokenVerifierConfig.issuer,
-      complete: true, // To return headers, payload and other useful token information
+  // https://github.com/panva/jose/blob/main/docs/functions/key_import.importSPKI.md#readme
+  private async importKey(): Promise<void> {
+    if (!('publicKey' in this.tokenVerifierConfig))
+      throw new Error('Cannot import key as publicKey is not defined in config')
+    const publicKey = await Promise.resolve(this.tokenVerifierConfig.publicKey)
+    if (typeof publicKey === 'string') {
+      this.publicKey = await importSPKI(publicKey, 'RS256')
+    } else {
+      const { payload, algorithm } = publicKey
+      this.publicKey = await importSPKI(payload, algorithm)
     }
   }
 
   public async verify(token: string): Promise<UserEnvelope> {
-    const getKey = (header: jwt.JwtHeader, callback: jwt.SigningKeyCallback): void => {
-      if (!header.kid) {
-        callback(new Error('JWT kid not found'))
-        return
-      }
-      this.client?.getSigningKey(header.kid, function (err: Error | null, key: jwksRSA.SigningKey) {
-        if (err) {
-          // This callback doesn't accept null so an empty string is enough here
-          callback(err, '')
-          return
-        }
-        const signingKey = key.getPublicKey()
-        callback(null, signingKey)
-      })
-    }
-
-    let key: jwt.Secret | jwt.GetPublicKeyOrSecret = getKey
-    if (!this.client) {
-      if (this.tokenVerifierConfig.publicKey) {
-        key = await this.tokenVerifierConfig.publicKey
-      } else {
-        throw new Error('Token verifier not well configured')
-      }
-    }
-
     token = TokenVerifierClient.sanitizeToken(token)
-
-    return new Promise((resolve, reject) => {
-      jwt.verify(token, key, this.options, (err, decoded) => {
-        if (err) {
-          return reject(err)
-        }
-        const jwtToken = decoded as any
-        const extraValidation = this.tokenVerifierConfig?.extraValidation ?? (() => Promise.resolve())
-        extraValidation(jwtToken, token)
-          .then(() => {
-            resolve(this.tokenToUserEnvelope(jwtToken))
-          })
-          .catch(reject)
-      })
-    })
+    let decodedToken = null
+    if (this.jwks) {
+      decodedToken = await jwtVerify(token, this.jwks, this.options)
+    }
+    if ('decryptionKey' in this.tokenVerifierConfig) {
+      decodedToken = await jwtDecrypt(token, this.tokenVerifierConfig.decryptionKey)
+    }
+    if (!this.publicKey && 'publicKey' in this.tokenVerifierConfig) await this.importKey()
+    if (this.publicKey) {
+      decodedToken = await jwtVerify(token, this.publicKey, this.options)
+    }
+    if (decodedToken == null) throw new Error('Token verifier not well configured')
+    if (this.tokenVerifierConfig?.extraValidation) {
+      await this.tokenVerifierConfig?.extraValidation({ ...decodedToken }, token)
+    }
+    return this.tokenToUserEnvelope(decodedToken)
   }
 
-  private tokenToUserEnvelope(decodedToken: any): UserEnvelope {
-    const payload = decodedToken.payload
-    const username = payload?.email || payload?.phone_number || payload.sub
-    const id = payload.sub
+  private tokenToUserEnvelope({ payload, protectedHeader }: JWTVerifyResult | JWTDecryptResult): UserEnvelope {
+    const username = payload.email || payload.phone_number || payload.sub
+    if (typeof username !== 'string') throw Error('No username found in token')
     const rolesClaim = this.tokenVerifierConfig.rolesClaim || 'custom:role'
     const role = payload[rolesClaim]
     const roleValues = TokenVerifierClient.rolesFromTokenRole(role)
     return {
-      id,
+      id: payload.sub,
       username,
       roles: roleValues,
-      claims: decodedToken.payload,
-      header: decodedToken.header,
+      claims: payload,
+      header: protectedHeader,
     }
   }
 
@@ -151,11 +139,13 @@ export class BoosterTokenVerifier {
   }
 
   private getTokenNotBeforeErrors(results: Array<PromiseSettledResult<UserEnvelope>>): Array<PromiseRejectedResult> {
-    return this.getErrors(results).filter((result) => result.reason instanceof NotBeforeError)
+    return this.getErrors(results).filter(
+      (result) => result.reason instanceof errors.JWTClaimValidationFailed && result.reason.claim === 'nbf'
+    )
   }
 
   private getTokenExpiredErrors(results: Array<PromiseSettledResult<UserEnvelope>>): Array<PromiseRejectedResult> {
-    return this.getErrors(results).filter((result) => result.reason instanceof TokenExpiredError)
+    return this.getErrors(results).filter((result) => result.reason instanceof errors.JWTExpired)
   }
 
   private getErrors(results: Array<PromiseSettledResult<UserEnvelope>>): Array<PromiseRejectedResult> {
