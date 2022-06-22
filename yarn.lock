@@ -19,9 +19,9 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@advantitge/booster-framework-provider-micro@workspace:packages/framework-provider-micro"
   dependencies:
-    "@boostercloud/framework-common-helpers": 0.28.1
-    "@boostercloud/framework-core": 0.28.1
-    "@boostercloud/framework-types": 0.28.1
+    "@boostercloud/framework-common-helpers": ^0.29.2
+    "@boostercloud/framework-core": ^0.29.2
+    "@boostercloud/framework-types": ^0.29.2
     "@types/chai-as-promised": 7.1.4
     "@types/cookie": 0.4.1
     "@types/faker": 5.1.5
