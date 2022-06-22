@@ -61,6 +61,25 @@ export async function readEntityLatestSnapshot(
   }
 }
 
+export async function deleteEntitySnapshots(
+  config: BoosterConfig,
+  logger: Logger,
+  entityTypeName: string,
+  entityID: UUID
+): Promise<void> {
+  const query = {
+    entityID: entityID,
+    entityTypeName: entityTypeName,
+    kind: 'snapshot' as const,
+  }
+  const collection = await getCollection(config.resourceNames.eventsStore)
+  const deleteResult = await collection.deleteMany(query)
+  logger.debug(
+    `[EventsAdapter#deleteEntitySnapshots] Deleting snapshot(s) for entity ${entityTypeName} with ID ${entityID}: `,
+    deleteResult
+  )
+}
+
 export async function storeEvents(
   eventEnvelopes: Array<EventEnvelope>,
   config: BoosterConfig,
