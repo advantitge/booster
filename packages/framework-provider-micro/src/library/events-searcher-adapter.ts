@@ -1,3 +1,4 @@
+import { getLogger } from '@boostercloud/framework-common-helpers'
 import {
   BoosterConfig,
   EventDeleteParameters,
@@ -5,9 +6,10 @@ import {
   EventInterface,
   EventSearchParameters,
   EventSearchResponse,
-  Logger,
+  PaginatedEntitiesIdsResult,
 } from '@boostercloud/framework-types'
-import { Filter } from 'mongodb'
+
+import { Filter, Logger } from 'mongodb'
 import { getCollection } from '../services/db'
 
 type DatabaseEventEnvelope = Omit<EventEnvelope, 'createdAt'> & { createdAt: Date }
@@ -36,9 +38,9 @@ function formEventQuery(parameters: EventSearchParameters | EventDeleteParameter
 
 export async function searchEvents(
   config: BoosterConfig,
-  logger: Logger,
   parameters: EventSearchParameters
 ): Promise<Array<EventSearchResponse>> {
+  const logger = getLogger(config, 'EventsSearcherAdapter#searchEvents')
   logger.debug('Initiating an events search. Filters: ', parameters)
   const query = formEventQuery(parameters)
   const collection = await getCollection(config.resourceNames.eventsStore)
@@ -53,14 +55,20 @@ export async function searchEvents(
   }))
 }
 
-export async function deleteEvents(
-  config: BoosterConfig,
-  logger: Logger,
-  parameters: EventSearchParameters
-): Promise<void> {
+export async function deleteEvents(config: BoosterConfig, parameters: EventSearchParameters): Promise<void> {
+  const logger = getLogger(config, 'EventsSearcherAdapter#deleteEvents')
   logger.debug('Initiating an events search and delete. Filters: ', parameters)
   const query = formEventQuery(parameters)
   const collection = await getCollection(config.resourceNames.eventsStore)
   const deleteResult = await collection.deleteMany(query)
   logger.debug('Events delete result: ', deleteResult)
+}
+
+export async function searchEntitiesIds(
+  config: BoosterConfig,
+  limit: number,
+  afterCursor: Record<string, string> | undefined,
+  entityTypeName: string
+): Promise<PaginatedEntitiesIdsResult> {
+  throw new Error('EventsSearcherAdapter#searchEntitiesIds: Not implemented yet')
 }

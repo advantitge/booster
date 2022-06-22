@@ -1,12 +1,14 @@
-import { GraphQLRequestEnvelope, GraphQLRequestEnvelopeError, Logger, UUID } from '@boostercloud/framework-types'
+import { getLogger } from '@boostercloud/framework-common-helpers'
+import { BoosterConfig, GraphQLRequestEnvelope, GraphQLRequestEnvelopeError, UUID } from '@boostercloud/framework-types'
 import { IncomingMessage } from 'http'
 import { json } from 'micro'
 import { parse } from 'cookie'
 
 export async function rawGraphQLRequestToEnvelope(
-  request: IncomingMessage,
-  logger: Logger
+  config: BoosterConfig,
+  request: IncomingMessage
 ): Promise<GraphQLRequestEnvelope | GraphQLRequestEnvelopeError> {
+  const logger = getLogger(config, 'GraphQLAdapter#rawGraphQLRequestToEnvelope')
   const body = await json(request)
 
   logger.debug('Received GraphQL request: \n- Headers: ', request.headers, '\n- Body: ', body)
