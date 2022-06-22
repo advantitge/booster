@@ -7,10 +7,12 @@ import {
   EventSearchParameters,
   EventSearchResponse,
   FilterFor,
+  PaginatedEntitiesIdsResult,
   FinderByKeyFunction,
-  Logger,
+  Instance,
   ReadModelInterface,
   ReadOnlyNonEmptyArray,
+  Register,
   Searcher,
   SearcherFunction,
   SequenceKey,
@@ -19,13 +21,14 @@ import {
 } from '@boostercloud/framework-types'
 import { BoosterEventDispatcher } from './booster-event-dispatcher'
 import { BoosterGraphQLDispatcher } from './booster-graphql-dispatcher'
-import { getLogger } from './booster-logger'
 import { BoosterScheduledCommandDispatcher } from './booster-scheduled-command-dispatcher'
 import { BoosterSubscribersNotifier } from './booster-subscribers-notifier'
 import { Importer } from './importer'
 import { EventStore } from './services/event-store'
 import { BoosterRocketDispatcher } from './booster-rocket-dispatcher'
 import { ReadModelStore } from './services/read-model-store'
+import { BoosterEntityMigrated } from './core-concepts/data-migration/events/booster-entity-migrated'
+import { RegisterHandler } from './booster-register-handler'
 
 /**
  * Main class to interact with Booster and configure it.
@@ -42,10 +45,6 @@ export class Booster {
    * Avoid creating instances of this class
    */
   private constructor() {}
-
-  public static get logger(): Logger {
-    return getLogger(this.config)
-  }
 
   public static configureCurrentEnv(configurator: (config: BoosterConfig) => void): void {
     configurator(this.config)
@@ -71,6 +70,7 @@ export class Booster {
     const projectRootPath = codeRootPath.replace(new RegExp(this.config.codeRelativePath + '$'), '')
     this.config.userProjectRootPath = projectRootPath
     Importer.importUserProjectFiles(codeRootPath)
+    this.configureDataMigrations()
     this.config.validate()
   }
 
@@ -92,7 +92,6 @@ export class Booster {
     ) => {
       const searchResult = await this.config.provider.readModels.search(
         this.config,
-        this.logger,
         readModelName,
         filters,
         sort,
@@ -115,13 +114,7 @@ export class Booster {
       id: UUID,
       sequenceKey?: SequenceKey
     ) => {
-      const readModels = await this.config.provider.readModels.fetch(
-        this.config,
-        this.logger,
-        readModelName,
-        id,
-        sequenceKey
-      )
+      const readModels = await this.config.provider.readModels.fetch(this.config, readModelName, id, sequenceKey)
       if (sequenceKey) {
         return readModels as ReadOnlyNonEmptyArray<TReadModel>
       }
@@ -131,16 +124,20 @@ export class Booster {
   }
 
   public static async events(request: EventSearchParameters): Promise<Array<EventSearchResponse>> {
-    const events: Array<EventSearchResponse> = await this.config.provider.events.search(
-      this.config,
-      this.logger,
-      request
-    )
+    const events: Array<EventSearchResponse> = await this.config.provider.events.search(this.config, request)
     return events.map((event) => {
       const eventMetadata = this.config.events[event.type]
       event.value = createInstance(eventMetadata.class, event.value)
       return event
     })
+  }
+
+  public static async entitiesIDs(
+    entityTypeName: string,
+    limit: number,
+    afterCursor?: Record<string, string>
+  ): Promise<PaginatedEntitiesIdsResult> {
+    return await this.config.provider.events.searchEntitiesIDs(this.config, limit, afterCursor, entityTypeName)
   }
 
   /**
@@ -152,7 +149,7 @@ export class Booster {
     entityClass: Class<TEntity>,
     entityID: UUID
   ): Promise<TEntity | undefined> {
-    const eventStore = new EventStore(this.config, this.logger)
+    const eventStore = new EventStore(this.config)
     const entitySnapshotEnvelope = await eventStore.fetchEntitySnapshot(entityClass.name, entityID)
     return entitySnapshotEnvelope ? createInstance(entityClass, entitySnapshotEnvelope.value) : undefined
   }
@@ -161,19 +158,19 @@ export class Booster {
     entityClass: Class<TEntity>,
     entityID: UUID
   ): Promise<void> {
-    const eventStore = new EventStore(this.config, this.logger)
+    const eventStore = new EventStore(this.config)
     await eventStore.deleteEntitySnapshots(entityClass.name, entityID)
   }
 
   public static async deleteEvents(request: EventDeleteParameters): Promise<void> {
-    await this.config.provider.events.delete(this.config, this.logger, request)
+    await this.config.provider.events.delete(this.config, request)
   }
 
   public static async deleteReadModel<TReadModel extends ReadModelInterface>(
     readModelClass: Class<TReadModel>,
     id: UUID
   ): Promise<void> {
-    await this.config.provider.readModels.delete(this.config, this.logger, readModelClass.name, {
+    await this.config.provider.readModels.delete(this.config, readModelClass.name, {
       id,
     })
   }
@@ -183,19 +180,14 @@ export class Booster {
     entityID: UUID
   ): Promise<void> {
     await Booster.deleteEntity(entityClass, entityID)
-    const events = await this.config.provider.events.forEntitySince(
-      this.config,
-      this.logger,
-      entityClass.name,
-      entityID
-    )
+    const events = await this.config.provider.events.forEntitySince(this.config, entityClass.name, entityID)
     await BoosterEventDispatcher.snapshotAndUpdateReadModels(
+      this.config,
       entityClass.name,
       entityID,
       events,
-      new EventStore(this.config, this.logger),
-      new ReadModelStore(this.config, this.logger),
-      this.logger
+      new EventStore(this.config),
+      new ReadModelStore(this.config)
     )
   }
 
@@ -203,23 +195,40 @@ export class Booster {
    * Dispatches event messages to your application.
    */
   public static dispatchEvent(rawEvent: unknown): Promise<unknown> {
-    return BoosterEventDispatcher.dispatch(rawEvent, this.config, this.logger)
+    return BoosterEventDispatcher.dispatch(rawEvent, this.config)
   }
 
   public static serveGraphQL(request: unknown): Promise<unknown> {
-    return new BoosterGraphQLDispatcher(this.config, this.logger).dispatch(request)
+    return new BoosterGraphQLDispatcher(this.config).dispatch(request)
   }
 
   public static triggerScheduledCommand(request: unknown): Promise<unknown> {
-    return new BoosterScheduledCommandDispatcher(this.config, this.logger).dispatch(request)
+    return new BoosterScheduledCommandDispatcher(this.config).dispatch(request)
   }
 
   public static notifySubscribers(request: unknown): Promise<unknown> {
-    return new BoosterSubscribersNotifier(this.config, this.logger).dispatch(request)
+    return new BoosterSubscribersNotifier(this.config).dispatch(request)
   }
 
   public static dispatchRocket(request: unknown): Promise<unknown> {
-    return new BoosterRocketDispatcher(this.config, this.logger).dispatch(request)
+    return new BoosterRocketDispatcher(this.config).dispatch(request)
+  }
+
+  public static migrateEntity(
+    oldEntityName: string,
+    oldEntityId: UUID,
+    newEntity: Instance & EntityInterface
+  ): Promise<void> {
+    const requestID = UUID.generate()
+    const register = new Register(requestID, {})
+    register.events(new BoosterEntityMigrated(oldEntityName, oldEntityId, newEntity.constructor.name, newEntity))
+    return RegisterHandler.handle(this.config, register)
+  }
+
+  private static configureDataMigrations(): void {
+    this.config.events[BoosterEntityMigrated.name] = {
+      class: BoosterEntityMigrated,
+    }
   }
 }
 
