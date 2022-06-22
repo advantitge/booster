@@ -2,6 +2,7 @@ import { ReadModelInterface, SequenceKey, UUID } from './concepts'
 import { BoosterConfig } from './config'
 import {
   ConnectionDataEnvelope,
+  EventDeleteParameters,
   EventEnvelope,
   EventSearchParameters,
   EventSearchResponse,
@@ -43,6 +44,8 @@ export interface ProviderEventsLibrary {
     afterCursor: Record<string, string> | undefined,
     entityTypeName: string
   ): Promise<PaginatedEntitiesIdsResult>
+  deleteEntitySnapshots(config: BoosterConfig, entityTypeName: string, entityID: UUID): Promise<void>
+  delete(config: BoosterConfig, parameters: EventDeleteParameters): Promise<void>
   /** Streams an event to the corresponding event handler */
   store(eventEnvelopes: Array<EventEnvelope>, config: BoosterConfig): Promise<void>
 }

@@ -23,6 +23,8 @@ export const Provider = (rockets?: RocketDescriptor[]): ProviderLibrary => {
         store: undefined as any,
         search: undefined as any,
         searchEntitiesIDs: undefined as any,
+        deleteEntitySnapshots: undefined as any,
+        delete: undefined as any,
       },
       // ProviderReadModelsLibrary
       readModels: {

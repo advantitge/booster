@@ -15,6 +15,12 @@ const originOfTime = new Date(0).toISOString() // Unix epoch
 export class EventStore {
   public constructor(readonly config: BoosterConfig) {}
 
+  public async deleteEntitySnapshots(entityName: string, entityID: UUID): Promise<void> {
+    const logger = getLogger(this.config, 'EventStore#deleteEntitySnapshots')
+    logger.debug(`[EventStore#deleteEntitySnapshots] Deleting snapshots for entity ${entityName} with ID ${entityID}`)
+    return this.config.provider.events.deleteEntitySnapshots(this.config, entityName, entityID)
+  }
+
   public async fetchEntitySnapshot(entityName: string, entityID: UUID): Promise<EventEnvelope | null> {
     const logger = getLogger(this.config, 'EventStore#fetchEntitySnapshot')
     logger.debug(`Fetching snapshot for entity ${entityName} with ID ${entityID}`)
