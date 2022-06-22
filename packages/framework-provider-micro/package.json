@@ -1,6 +1,6 @@
 {
   "name": "@advantitge/booster-framework-provider-micro",
-  "version": "0.2.1",
+  "version": "0.3.1",
   "description": "Run Booster with Micro and MongoDB. Can be used to link the Booster API as a Next.js API route.",
   "keywords": [
     "framework-provider-micro"
@@ -33,9 +33,9 @@
     "url": "https://github.com/boostercloud/booster/issues"
   },
   "dependencies": {
-    "@boostercloud/framework-common-helpers": "0.28.1",
-    "@boostercloud/framework-core": "0.28.1",
-    "@boostercloud/framework-types": "0.28.1",
+    "@boostercloud/framework-common-helpers": "^0.29.2",
+    "@boostercloud/framework-core": "^0.29.2",
+    "@boostercloud/framework-types": "^0.29.2",
     "cookie": "0.5.0",
     "micro": "9.3.4",
     "micro-cors": "0.1.1",
