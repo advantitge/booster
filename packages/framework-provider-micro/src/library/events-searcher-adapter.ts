@@ -1,11 +1,13 @@
+import { getLogger } from '@boostercloud/framework-common-helpers'
 import {
   BoosterConfig,
   EventEnvelope,
   EventInterface,
   EventSearchParameters,
   EventSearchResponse,
-  Logger,
+  PaginatedEntitiesIdsResult,
 } from '@boostercloud/framework-types'
+
 import { Filter } from 'mongodb'
 import { getCollection } from '../services/db'
 
@@ -13,9 +15,9 @@ type DatabaseEventEnvelope = Omit<EventEnvelope, 'createdAt'> & { createdAt: Dat
 
 export async function searchEvents(
   config: BoosterConfig,
-  logger: Logger,
   parameters: EventSearchParameters
 ): Promise<Array<EventSearchResponse>> {
+  const logger = getLogger(config, 'EventsSearcherAdapter#searchEvents')
   logger.debug('Initiating an events search. Filters: ', parameters)
   const query: Filter<DatabaseEventEnvelope> = {
     kind: { $eq: 'event' },
@@ -44,4 +46,13 @@ export async function searchEvents(
     entity: e.entityTypeName,
     value: e.value as EventInterface,
   }))
+}
+
+export async function searchEntitiesIds(
+  config: BoosterConfig,
+  limit: number,
+  afterCursor: Record<string, string> | undefined,
+  entityTypeName: string
+): Promise<PaginatedEntitiesIdsResult> {
+  throw new Error('EventsSearcherAdapter#searchEntitiesIds: Not implemented yet')
 }

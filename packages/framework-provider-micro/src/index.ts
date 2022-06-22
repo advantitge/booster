@@ -8,7 +8,7 @@ import {
   readEntityLatestSnapshot,
   storeEvents,
 } from './library/events-adapter'
-import { searchEvents } from './library/events-searcher-adapter'
+import { searchEvents, searchEntitiesIds } from './library/events-searcher-adapter'
 import { rawGraphQLRequestToEnvelope } from './library/graphql-adapter'
 import {
   fetchReadModel,
@@ -27,6 +27,7 @@ export const Provider = (): ProviderLibrary => ({
     latestEntitySnapshot: readEntityLatestSnapshot,
     store: storeEvents,
     search: searchEvents,
+    searchEntitiesIDs: searchEntitiesIds,
   },
   // ProviderReadModelsLibrary
   readModels: {
