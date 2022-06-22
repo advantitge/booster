@@ -1,5 +1,6 @@
+import { getLogger } from '@boostercloud/framework-common-helpers'
 import { boosterEventDispatcher } from '@boostercloud/framework-core'
-import { BoosterConfig, EventEnvelope, Logger, UUID } from '@boostercloud/framework-types'
+import { BoosterConfig, EventEnvelope, UUID } from '@boostercloud/framework-types'
 
 import { getCollection } from '../services/db'
 
@@ -9,11 +10,11 @@ export function rawEventsToEnvelopes(rawEvents: Array<unknown>): Array<EventEnve
 
 export async function readEntityEventsSince(
   config: BoosterConfig,
-  logger: Logger,
   entityTypeName: string,
   entityID: UUID,
   since?: string
 ): Promise<Array<EventEnvelope>> {
+  const logger = getLogger(config, 'EventsAdapter#readEntityEventsSince')
   const query = {
     entityID: entityID,
     entityTypeName: entityTypeName,
@@ -34,7 +35,6 @@ export async function readEntityEventsSince(
 
 export async function readEntityLatestSnapshot(
   config: BoosterConfig,
-  logger: Logger,
   entityTypeName: string,
   entityID: UUID
 ): Promise<EventEnvelope | null> {
@@ -43,6 +43,7 @@ export async function readEntityLatestSnapshot(
     entityTypeName: entityTypeName,
     kind: 'snapshot' as const,
   }
+  const logger = getLogger(config, 'EventsAdapter#readEntityLatestSnapshot')
   const collection = await getCollection(config.resourceNames.eventsStore)
   const events = await collection.find<EventEnvelope>(query).sort({ createdAt: -1 }).limit(1).toArray()
   const snapshot = events?.[0]
@@ -63,10 +64,10 @@ export async function readEntityLatestSnapshot(
 
 export async function deleteEntitySnapshots(
   config: BoosterConfig,
-  logger: Logger,
   entityTypeName: string,
   entityID: UUID
 ): Promise<void> {
+  const logger = getLogger(config, 'EventsAdapter#deleteEntitySnapshots')
   const query = {
     entityID: entityID,
     entityTypeName: entityTypeName,
@@ -80,11 +81,8 @@ export async function deleteEntitySnapshots(
   )
 }
 
-export async function storeEvents(
-  eventEnvelopes: Array<EventEnvelope>,
-  config: BoosterConfig,
-  logger: Logger
-): Promise<void> {
+export async function storeEvents(eventEnvelopes: Array<EventEnvelope>, config: BoosterConfig): Promise<void> {
+  const logger = getLogger(config, 'EventsAdapter#storeEvents')
   const [events, snapshots] = [[] as Array<EventEnvelope>, [] as Array<EventEnvelope>]
   eventEnvelopes.forEach((eventEnvelope) =>
     eventEnvelope.kind === 'snapshot' ? snapshots.push(eventEnvelope) : events.push(eventEnvelope)

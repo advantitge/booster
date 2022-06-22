@@ -1,7 +1,7 @@
+import { getLogger } from '@boostercloud/framework-common-helpers'
 import {
   BoosterConfig,
   FilterFor,
-  Logger,
   ReadModelEnvelope,
   ReadModelInterface,
   ReadModelListResult,
@@ -16,7 +16,6 @@ import { queryRecordFor } from './searcher-adapter'
 
 export async function rawReadModelEventsToEnvelopes(
   _config: BoosterConfig,
-  _logger: Logger,
   rawEvents: Array<unknown>
 ): Promise<Array<ReadModelEnvelope>> {
   return rawEvents as Array<ReadModelEnvelope>
@@ -24,11 +23,11 @@ export async function rawReadModelEventsToEnvelopes(
 
 export async function fetchReadModel(
   config: BoosterConfig,
-  logger: Logger,
   readModelName: string,
   readModelID: UUID,
   sequenceKey?: SequenceKey
 ): Promise<ReadOnlyNonEmptyArray<ReadModelInterface>> {
+  const logger = getLogger(config, 'ReadModelAdapter#fetchReadModel')
   if (sequenceKey) {
     logger.info('sequencedBy not implemented for framework-provider-micro!')
   }
@@ -49,11 +48,11 @@ export async function fetchReadModel(
 
 export async function storeReadModel(
   config: BoosterConfig,
-  logger: Logger,
   readModelName: string,
   { id: _id, ...readModel }: ReadModelInterface,
   _expectedCurrentVersion: number
 ): Promise<void> {
+  const logger = getLogger(config, 'ReadModelAdapter#storeReadModel')
   const collection = await getCollection(config.resourceNames.forReadModel(readModelName))
   logger.debug('[ReadModelAdapter#storeReadModel] Storing readModel ' + JSON.stringify(readModel))
   await collection.replaceOne({ _id }, { _id, ...readModel }, { upsert: true })
@@ -62,7 +61,6 @@ export async function storeReadModel(
 
 export async function searchReadModel(
   config: BoosterConfig,
-  logger: Logger,
   readModelName: string,
   filters: FilterFor<unknown>,
   sortBy?: SortFor<unknown>,
@@ -70,6 +68,7 @@ export async function searchReadModel(
   afterCursor?: { index: number } | undefined,
   paginatedVersion = false
 ): Promise<Array<any> | ReadModelListResult<any>> {
+  const logger = getLogger(config, 'ReadModelAdapter#searchReadModel')
   const collection = await getCollection(config.resourceNames.forReadModel(readModelName))
   logger.debug('Converting filter to query')
   const query = queryRecordFor(readModelName, filters)
@@ -99,10 +98,10 @@ export async function searchReadModel(
 
 export async function deleteReadModel(
   config: BoosterConfig,
-  logger: Logger,
   readModelName: string,
   readModel: ReadModelInterface
 ): Promise<void> {
+  const logger = getLogger(config, 'ReadModelAdapter#deleteReadModel')
   const collection = await getCollection(config.resourceNames.forReadModel(readModelName))
   logger.debug('[ReadModelAdapter#deleteReadModel] Deleting readModel ' + JSON.stringify(readModel))
   await collection.deleteOne({ _id: readModel.id })
