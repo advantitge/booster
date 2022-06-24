@@ -59,12 +59,17 @@ export async function searchEntitiesIds(
   const skip = +(afterCursor?.index || 0)
   const collection = await getCollection(config.resourceNames.eventsStore)
   const items = await collection
-    .find<DatabaseEventEnvelope>({ kind: { $eq: 'snapshot' }, entityTypeName: { $eq: entityTypeName } }, {
-      limit: limit || 1000,
-      skip,
-      _id: 0,
-      entityID: 1,
-    } as FindOptions)
+    .find<DatabaseEventEnvelope>(
+      { kind: { $eq: 'snapshot' }, entityTypeName: { $eq: entityTypeName } },
+      {
+        limit: limit || 1000,
+        skip,
+        projection: {
+          _id: 0,
+          entityID: 1,
+        },
+      }
+    )
     .sort({ createdAt: 1 })
     .toArray()
   logger.debug('Entity search result: ', items)
