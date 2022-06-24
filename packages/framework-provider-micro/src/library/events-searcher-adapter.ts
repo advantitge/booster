@@ -9,7 +9,7 @@ import {
   PaginatedEntitiesIdsResult,
 } from '@boostercloud/framework-types'
 
-import { Filter } from 'mongodb'
+import { Filter, FindOptions } from 'mongodb'
 import { getCollection } from '../services/db'
 
 type DatabaseEventEnvelope = Omit<EventEnvelope, 'createdAt'> & { createdAt: Date }
@@ -67,8 +67,22 @@ export async function deleteEvents(config: BoosterConfig, parameters: EventSearc
 export async function searchEntitiesIds(
   config: BoosterConfig,
   limit: number,
-  afterCursor: Record<string, string> | undefined,
+  afterCursor: { index: string } | undefined,
   entityTypeName: string
 ): Promise<PaginatedEntitiesIdsResult> {
-  throw new Error('EventsSearcherAdapter#searchEntitiesIds: Not implemented yet')
+  const logger = getLogger(config, 'EventsSearcherAdapter#searchEntitiesIds')
+  logger.debug('Initiating an entity search. Filter: ', { limit, afterCursor, entityTypeName })
+  const skip = +(afterCursor?.index || 0)
+  const collection = await getCollection(config.resourceNames.eventsStore)
+  const items = await collection
+    .find<DatabaseEventEnvelope>({ kind: { $eq: 'snapshot' }, entityTypeName: { $eq: entityTypeName } }, {
+      limit: limit || 1000,
+      skip,
+      _id: 0,
+      entityID: 1,
+    } as FindOptions)
+    .sort({ createdAt: 1 })
+    .toArray()
+  logger.debug('Entity search result: ', items)
+  return { items, count: items.length, cursor: { index: `${skip + items.length}` } }
 }
