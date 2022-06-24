@@ -9,7 +9,7 @@ import {
   PaginatedEntitiesIdsResult,
 } from '@boostercloud/framework-types'
 
-import { Filter, Logger } from 'mongodb'
+import { Filter } from 'mongodb'
 import { getCollection } from '../services/db'
 
 type DatabaseEventEnvelope = Omit<EventEnvelope, 'createdAt'> & { createdAt: Date }
