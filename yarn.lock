@@ -2281,14 +2281,14 @@ __metadata:
 
 "@boostercloud/framework-provider-local@file:packages/framework-provider-local::locator=root%40workspace%3A.":
   version: 0.29.2
-  resolution: "@boostercloud/framework-provider-local@file:packages/framework-provider-local#packages/framework-provider-local::hash=f616d5&locator=root%40workspace%3A."
+  resolution: "@boostercloud/framework-provider-local@file:packages/framework-provider-local#packages/framework-provider-local::hash=075bbc&locator=root%40workspace%3A."
   dependencies:
     "@boostercloud/framework-common-helpers": ^0.29.2
     "@boostercloud/framework-types": ^0.29.2
     "@types/nedb": ^1.8.11
     nedb: ^1.8.0
     tslib: 2.3.1
-  checksum: 8e00b1550f9a2924f918b06be900b2ef450f2bee4e6944acf794dfa6e71541c9e7f5845ffd2f1617744e181bee095a0e3c873fc80ea2b7351ec04d4e20f29698
+  checksum: cebe8dcc8fdd7db60bbf86b9bb05b20210e8c7e289f2b74a86b6aa98d320e8396b64a8498003eab8dc59be3cb591094fd6fa4196e945935f5940448ca78800c1
   languageName: node
   linkType: hard
 
