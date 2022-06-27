@@ -78,7 +78,7 @@ export async function searchEntitiesIds(
     .find<DatabaseEventEnvelope>(
       { kind: { $eq: 'snapshot' }, entityTypeName: { $eq: entityTypeName } },
       {
-        limit: limit || 1000,
+        limit: limit ?? 1000,
         skip,
         projection: {
           _id: 0,
