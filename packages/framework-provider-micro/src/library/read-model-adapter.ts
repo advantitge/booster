@@ -79,6 +79,7 @@ export async function searchReadModel(
     ...([sortBy && Object.keys(sortBy).length > 0 && { $sort: convertSortBy(sortBy) }] as any),
     { $skip: afterCursor?.index || 0 },
     { $limit: limit ?? 1000 },
+    ...[limit != 0 && { $limit: limit ?? 1000 }],
     { $addFields: { id: '$_id' } },
     { $project: { _id: 0 } },
   ].filter(Boolean)
