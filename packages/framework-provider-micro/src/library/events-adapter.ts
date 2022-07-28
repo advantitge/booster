@@ -80,7 +80,7 @@ export async function storeEvents(eventEnvelopes: Array<EventEnvelope>, config: 
     await collection.bulkWrite(
       snapshots.map((snapshot) => ({
         updateOne: {
-          filter: { entityID: snapshot.entityID, kind: 'snapshot' },
+          filter: { entityID: snapshot.entityID, kind: 'snapshot', entityTypeName: snapshot.entityTypeName },
           update: { $set: { ...snapshot, createdAt: new Date(snapshot.createdAt) } },
           upsert: true,
         },
