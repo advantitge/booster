@@ -19,6 +19,13 @@ export async function rawGraphQLRequestToEnvelope(
     requestID,
     eventType,
     connectionID,
+    context: {
+      request: {
+        headers: request.headers,
+        body,
+      },
+      rawContext: request,
+    },
     token: getAuthorizationToken(request),
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     value: body as any,
