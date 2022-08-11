@@ -8,10 +8,30 @@ import {
   PaginatedEntitiesIdsResult,
 } from '@boostercloud/framework-types'
 
-import { Filter, FindOptions } from 'mongodb'
+import { Filter } from 'mongodb'
 import { getCollection } from '../services/db'
 
 type DatabaseEventEnvelope = Omit<EventEnvelope, 'createdAt'> & { createdAt: Date }
+
+// Remember to use the same order as the index fields
+function formEventQuery(parameters: EventSearchParameters): Filter<DatabaseEventEnvelope> {
+  if (!('entity' in parameters) && !('type' in parameters))
+    throw new Error('Invalid search event query. It is neither an search by "entity" nor a search by "type"')
+
+  return {
+    kind: { $eq: 'event' },
+    // eslint-disable-next-line @typescript-eslint/no-extra-parens
+    ...('entity' in parameters && { entityTypeName: { $eq: parameters.entity } }),
+    // eslint-disable-next-line @typescript-eslint/no-extra-parens
+    ...('entityID' in parameters && { entityID: { $eq: parameters.entityID } }),
+    // eslint-disable-next-line @typescript-eslint/no-extra-parens
+    ...('type' in parameters && { typeName: { $eq: parameters.type } }),
+    createdAt: {
+      $gte: parameters.from ? new Date(parameters.from) : new Date(0),
+      $lte: parameters.to ? new Date(parameters.to) : new Date(),
+    },
+  }
+}
 
 export async function searchEvents(
   config: BoosterConfig,
@@ -19,23 +39,7 @@ export async function searchEvents(
 ): Promise<Array<EventSearchResponse>> {
   const logger = getLogger(config, 'EventsSearcherAdapter#searchEvents')
   logger.debug('Initiating an events search. Filters: ', parameters)
-  const query: Filter<DatabaseEventEnvelope> = {
-    kind: { $eq: 'event' },
-    createdAt: {
-      $gte: parameters.from ? new Date(parameters.from) : new Date(0),
-      $lte: parameters.to ? new Date(parameters.to) : new Date(),
-    },
-  }
-  if ('entity' in parameters) {
-    query.entityTypeName = { $eq: parameters.entity }
-    if (parameters.entityID) {
-      query.entityID = { $eq: parameters.entityID }
-    }
-  } else if ('type' in parameters) {
-    query.typeName = { $eq: parameters.type }
-  } else {
-    throw new Error('Invalid search event query. It is neither an search by "entity" nor a search by "type"')
-  }
+  const query = formEventQuery(parameters)
   const collection = await getCollection(config.resourceNames.eventsStore)
   const eventEnvelopes = await collection.find<DatabaseEventEnvelope>(query).sort({ createdAt: 1 }).toArray()
   logger.debug('Events search result: ', eventEnvelopes)
@@ -60,7 +64,10 @@ export async function searchEntitiesIds(
   const collection = await getCollection(config.resourceNames.eventsStore)
   const items = await collection
     .find<DatabaseEventEnvelope>(
-      { kind: { $eq: 'snapshot' }, entityTypeName: { $eq: entityTypeName } },
+      {
+        kind: { $eq: 'snapshot' },
+        entityTypeName: { $eq: entityTypeName },
+      },
       {
         limit: limit ?? 1000,
         skip,

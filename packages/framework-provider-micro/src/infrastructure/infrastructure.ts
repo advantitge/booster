@@ -14,14 +14,21 @@ async function init(config: BoosterConfig): Promise<void> {
   await indexReadModelsCollections(config)
 }
 
+/* Make sure to use the same order in the query fields as in the index fields */
 async function indexEventsCollection(config: BoosterConfig): Promise<void> {
   const eventsCollectionName = config.resourceNames.eventsStore
   const collection = await getCollection(eventsCollectionName)
-  await collection.createIndex({ entityTypeName: 1, entityID: 1, kind: 1, createdAt: -1 })
-  await collection.createIndex({ entityID: 1, entityTypeName: 1, kind: 1, createdAt: -1 })
-  await collection.createIndex({ entityTypeName: 1, kind: 1, createdAt: -1 })
-  await collection.createIndex({ typeName: 1, createdAt: -1 })
-  await collection.createIndex({ kind: 1, createdAt: -1 })
+  await collection.createIndex(
+    { kind: 1, entityTypeName: 1, entityID: 1, createdAt: -1 },
+    { name: '1_kind_entityTypeName_entityID_createdAt' }
+  )
+  await collection.createIndex(
+    { kind: 1, entityTypeName: 1, createdAt: -1 },
+    { name: '2_kind_entityTypeName_createdAt' }
+  )
+  await collection.createIndex({ kind: 1, createdAt: -1 }, { name: '3_kind_createdAt' })
+
+  await collection.createIndex({ kind: 1, typeName: 1, createdAt: -1 }, { name: '4_kind_typeName_createdAt' })
 }
 
 async function indexReadModelsCollections(config: BoosterConfig): Promise<void> {
