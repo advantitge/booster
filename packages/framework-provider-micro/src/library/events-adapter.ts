@@ -16,9 +16,9 @@ export async function readEntityEventsSince(
 ): Promise<Array<EventEnvelope>> {
   const logger = getLogger(config, 'EventsAdapter#readEntityEventsSince')
   const query = {
-    entityID: entityID,
-    entityTypeName: entityTypeName,
     kind: 'event' as const,
+    entityTypeName: entityTypeName,
+    entityID: entityID,
     createdAt: {
       $gt: since ? new Date(since) : new Date(0),
     },
@@ -39,9 +39,9 @@ export async function readEntityLatestSnapshot(
   entityID: UUID
 ): Promise<EventEnvelope | null> {
   const query = {
-    entityID: entityID,
-    entityTypeName: entityTypeName,
     kind: 'snapshot' as const,
+    entityTypeName: entityTypeName,
+    entityID: entityID,
   }
   const logger = getLogger(config, 'EventsAdapter#readEntityLatestSnapshot')
   const collection = await getCollection(config.resourceNames.eventsStore)
@@ -99,7 +99,7 @@ export async function storeEvents(eventEnvelopes: Array<EventEnvelope>, config: 
     await collection.bulkWrite(
       snapshots.map((snapshot) => ({
         updateOne: {
-          filter: { entityID: snapshot.entityID, kind: 'snapshot' },
+          filter: { entityID: snapshot.entityID, kind: 'snapshot', entityTypeName: snapshot.entityTypeName },
           update: { $set: { ...snapshot, createdAt: new Date(snapshot.createdAt) } },
           upsert: true,
         },

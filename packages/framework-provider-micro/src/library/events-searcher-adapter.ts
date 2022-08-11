@@ -9,31 +9,29 @@ import {
   PaginatedEntitiesIdsResult,
 } from '@boostercloud/framework-types'
 
-import { Filter, Logger } from 'mongodb'
+import { Filter } from 'mongodb'
 import { getCollection } from '../services/db'
 
 type DatabaseEventEnvelope = Omit<EventEnvelope, 'createdAt'> & { createdAt: Date }
 
+// Remember to use the same order as the index fields
 function formEventQuery(parameters: EventSearchParameters | EventDeleteParameters): Filter<DatabaseEventEnvelope> {
-  const query: Filter<DatabaseEventEnvelope> = {
+  if (!('entity' in parameters) && !('type' in parameters))
+    throw new Error('Invalid search event query. It is neither an search by "entity" nor a search by "type"')
+
+  return {
     kind: { $eq: 'event' },
+    // eslint-disable-next-line @typescript-eslint/no-extra-parens
+    ...('entity' in parameters && { entityTypeName: { $eq: parameters.entity } }),
+    // eslint-disable-next-line @typescript-eslint/no-extra-parens
+    ...('entityID' in parameters && { entityID: { $eq: parameters.entityID } }),
+    // eslint-disable-next-line @typescript-eslint/no-extra-parens
+    ...('type' in parameters && { typeName: { $eq: parameters.type } }),
     createdAt: {
       $gte: parameters.from ? new Date(parameters.from) : new Date(0),
       $lte: parameters.to ? new Date(parameters.to) : new Date(),
     },
   }
-  if (!('entity' in parameters) && !('type' in parameters))
-    throw new Error('Invalid search event query. It is neither an search by "entity" nor a search by "type"')
-  if ('entity' in parameters) {
-    query.entityTypeName = { $eq: parameters.entity }
-    if (parameters.entityID) {
-      query.entityID = { $eq: parameters.entityID }
-    }
-  }
-  if ('type' in parameters) {
-    query.typeName = { $eq: parameters.type }
-  }
-  return query
 }
 
 export async function searchEvents(
@@ -67,8 +65,30 @@ export async function deleteEvents(config: BoosterConfig, parameters: EventSearc
 export async function searchEntitiesIds(
   config: BoosterConfig,
   limit: number,
-  afterCursor: Record<string, string> | undefined,
+  afterCursor: { index: string } | undefined,
   entityTypeName: string
 ): Promise<PaginatedEntitiesIdsResult> {
-  throw new Error('EventsSearcherAdapter#searchEntitiesIds: Not implemented yet')
+  const logger = getLogger(config, 'EventsSearcherAdapter#searchEntitiesIds')
+  logger.debug('Initiating an entity search. Filter: ', { limit, afterCursor, entityTypeName })
+  const skip = +(afterCursor?.index || 0)
+  const collection = await getCollection(config.resourceNames.eventsStore)
+  const items = await collection
+    .find<DatabaseEventEnvelope>(
+      {
+        kind: { $eq: 'snapshot' },
+        entityTypeName: { $eq: entityTypeName },
+      },
+      {
+        limit: limit ?? 1000,
+        skip,
+        projection: {
+          _id: 0,
+          entityID: 1,
+        },
+      }
+    )
+    .sort({ createdAt: 1 })
+    .toArray()
+  logger.debug('Entity search result: ', items)
+  return { items, count: items.length, cursor: { index: `${skip + items.length}` } }
 }
