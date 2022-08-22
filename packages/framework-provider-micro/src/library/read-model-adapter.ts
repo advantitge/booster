@@ -99,9 +99,13 @@ export async function searchReadModel(
 export async function deleteReadModel(
   config: BoosterConfig,
   readModelName: string,
-  readModel: ReadModelInterface
+  readModel: ReadModelInterface | undefined
 ): Promise<void> {
   const logger = getLogger(config, 'ReadModelAdapter#deleteReadModel')
+  if (!readModel) {
+    logger.debug('[ReadModelAdapter#deleteReadModel] Read model not found, skipping delete')
+    return
+  }
   const collection = await getCollection(config.resourceNames.forReadModel(readModelName))
   logger.debug('[ReadModelAdapter#deleteReadModel] Deleting readModel ' + JSON.stringify(readModel))
   await collection.deleteOne({ _id: readModel.id })
