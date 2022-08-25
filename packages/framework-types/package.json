@@ -1,6 +1,6 @@
 {
   "name": "@boostercloud/framework-types",
-  "version": "0.30.4",
+  "version": "0.30.6",
   "description": "Contains Booster types related to the information extracted from the user project",
   "keywords": [
     "framework-types"
@@ -37,7 +37,7 @@
     "uuid": "8.3.2"
   },
   "devDependencies": {
-    "@boostercloud/metadata-booster": "^0.30.4",
+    "@boostercloud/metadata-booster": "^0.30.6",
     "@types/graphql": "14.5.0",
     "@types/uuid": "8.3.0",
     "chai": "4.2.0",
