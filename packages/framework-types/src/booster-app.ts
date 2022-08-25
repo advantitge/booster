@@ -9,7 +9,6 @@ import {
   EventSearchResponse,
   EventDeleteParameters,
   PaginatedEntitiesIdsResult,
-  Instance,
 } from '.'
 
 /**
@@ -24,7 +23,6 @@ export interface BoosterApp {
   entity<TEntity extends EntityInterface>(entityName: Class<TEntity>, entityID: UUID): Promise<TEntity | undefined>
   readModel<TReadModel extends ReadModelInterface>(readModelClass: Class<TReadModel>): Searcher<TReadModel>
   events(request: EventSearchParameters): Promise<Array<EventSearchResponse>>
-  migrateEntity(oldEntityName: string, oldEntityId: UUID, newEntity: Instance & EntityInterface): Promise<void>
   entitiesIDs(
     entityTypeName: string,
     limit: number,
