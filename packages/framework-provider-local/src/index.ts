@@ -45,6 +45,10 @@ export const Provider = (rocketDescriptors?: RocketDescriptor[]): ProviderLibrar
     store: storeEvents.bind(null, userApp, eventRegistry),
     search: searchEvents.bind(null, eventRegistry),
     searchEntitiesIDs: searchEntitiesIds.bind(null, eventRegistry),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    deleteEntitySnapshots: undefined as any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    delete: undefined as any,
   },
   // ProviderReadModelsLibrary
   readModels: {
@@ -63,6 +67,7 @@ export const Provider = (rocketDescriptors?: RocketDescriptor[]): ProviderLibrar
     deleteSubscription: undefined as any,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     deleteAllSubscriptions: undefined as any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   },
   // ProviderGraphQLLibrary
   graphQL: {

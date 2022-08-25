@@ -39,6 +39,8 @@ export const Provider = (rockets?: RocketDescriptor[]): ProviderLibrary => ({
     latestEntitySnapshot: readEntityLatestSnapshot.bind(null, cosmosClient),
     search: searchEvents.bind(null, cosmosClient),
     searchEntitiesIDs: searchEntitiesIds.bind(null, cosmosClient),
+    deleteEntitySnapshots: undefined as any,
+    delete: undefined as any,
   },
   // ProviderReadModelsLibrary
   readModels: {

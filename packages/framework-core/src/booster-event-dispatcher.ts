@@ -51,7 +51,7 @@ export class BoosterEventDispatcher {
     }
   }
 
-  private static async snapshotAndUpdateReadModels(
+  static async snapshotAndUpdateReadModels(
     config: BoosterConfig,
     entityName: string,
     entityID: UUID,
