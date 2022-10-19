@@ -6,8 +6,6 @@ import { APIResult } from '../library/api-adapter'
 import { boosterServeGraphQL } from '@boostercloud/framework-core'
 import { URL } from 'url'
 
-const cors = createCors()
-
 function responseToHtml(text: string): string {
   return `<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="margin:0;">${text}</body></html>`
 }
@@ -20,7 +18,17 @@ function renderExplorer(endpoint: string): string {
   )
 }
 
-export const requestHandler: (req: IncomingMessage, res: ServerResponse) => Promise<void> = cors(
+export function corsMiddleware(
+  handler: (req: IncomingMessage, res: ServerResponse) => Promise<void>
+): (req: IncomingMessage, res: ServerResponse) => Promise<void> {
+  return (req, res) => {
+    const origin = req.headers.origin
+    const cors = createCors({ ...(origin && { origin }) })
+    return cors(handler)(req, res)
+  }
+}
+
+export const requestHandler: (req: IncomingMessage, res: ServerResponse) => Promise<void> = corsMiddleware(
   async (req: IncomingMessage, res: ServerResponse): Promise<void> => {
     const host = req.headers.host
     if (!host) throw Error(`Host header is missing ${JSON.stringify(req.headers)}`)
