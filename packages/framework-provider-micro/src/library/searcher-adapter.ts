@@ -67,6 +67,10 @@ type QueryOperation<TValue> =
   | {
       [TKey in '$regex' | '$nin']?: RegExp
     }
+  // `regex` must have a RegExp as a result
+  | {
+      [TKey in '$exists']?: TValue
+    }
 
 /**
  * Table of equivalences between a GraphQL operation and the NeDB
@@ -86,6 +90,7 @@ const queryOperatorTable: Record<string, (values: Array<QueryValue>) => QueryOpe
   contains: buildRegexQuery.bind(null, 'contains'),
   beginsWith: buildRegexQuery.bind(null, 'begins-with'),
   includes: (values) => ({ $all: values }),
+  isDefined: (values) => ({ $exists: values[0] }),
 }
 
 /**
