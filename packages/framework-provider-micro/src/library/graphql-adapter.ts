@@ -32,7 +32,7 @@ export async function rawGraphQLRequestToEnvelope(
   }
 }
 
-function getAuthorizationToken(request: IncomingMessage): string | undefined {
+export function getAuthorizationToken(request: IncomingMessage): string | undefined {
   try {
     const cookieToken = request.headers.cookie && parse(request.headers.cookie)['session-token']
     if (cookieToken) return cookieToken
