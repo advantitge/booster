@@ -17,7 +17,7 @@
     "@boostercloud/framework-provider-kubernetes": "^0.30.6",
     "@boostercloud/framework-provider-local": "^0.30.6",
     "@boostercloud/framework-types": "^0.30.6",
-    "aws-sdk": "2.853.0"
+    "aws-sdk": "^2.848.0"
   },
   "devDependencies": {
     "@boostercloud/application-tester": "^0.30.6",
@@ -42,11 +42,13 @@
     "chai-as-promised": "7.1.1",
     "cross-fetch": "3.1.5",
     "faker": "5.1.0",
+    "graphql": "15.8.0",
     "graphql-tag": "2.12.4",
     "jsonwebtoken": "8.5.1",
     "jwks-rsa": "2.0.3",
     "mocha": "8.4.0",
     "mocha-skip-if": "0.0.3",
+    "rimraf": "3.0.2",
     "serverless": "3.8.0",
     "serverless-artillery": "0.5.2",
     "subscriptions-transport-ws": "0.9.18",
