@@ -26,7 +26,7 @@ export const template = `{
     "@types/mocha": "8.2.2",
     "nyc": "15.1.0",
     "prettier":  "2.3.0",
-    "typescript": "4.5.4",
+    "typescript": "4.8.4",
     "ts-node": "9.1.1",
     "@types/node": "15.0.2",
     "ttypescript": "1.5.13"
