@@ -35,11 +35,10 @@ const transformer: (program: ts.Program) => ts.TransformerFactory<ts.SourceFile>
               filterInterfaceFunctionName,
               importedTypes
             )
-            const newDecorators = [...(node.decorators ?? []), metadataDecorator]
+            const newDecorators = [...(node.modifiers ?? []), metadataDecorator]
             return f.updateClassDeclaration(
               node,
               newDecorators,
-              node.modifiers,
               node.name,
               node.typeParameters,
               node.heritageClauses,
@@ -51,7 +50,7 @@ const transformer: (program: ts.Program) => ts.TransformerFactory<ts.SourceFile>
       }
       const modifiedSourceFile = ts.visitNode(sourceFile, visitor)
       return f.updateSourceFile(modifiedSourceFile, [
-        f.createImportDeclaration(undefined, undefined, undefined, f.createStringLiteral('reflect-metadata')),
+        f.createImportDeclaration(undefined, undefined, f.createStringLiteral('reflect-metadata')),
         ...modifiedSourceFile.statements,
         createFilterInterfaceFunction(f, filterInterfaceFunctionName),
       ])
