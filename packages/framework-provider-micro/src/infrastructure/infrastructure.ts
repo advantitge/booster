@@ -32,8 +32,8 @@ async function indexEventsCollection(config: BoosterConfig): Promise<void> {
 }
 
 async function indexReadModelsCollections(config: BoosterConfig): Promise<void> {
-  for (const readModelName of Object.keys(config.readModels)) {
+  for (const [readModelName, indexSet] of Object.entries(config.readModelIndexKeys)) {
     const collection = await getCollection(config.resourceNames.forReadModel(readModelName))
-    await collection.createIndex({ _id: 1 }) // Not needed, auto created by MongoDB but might be useful to extend this init code in the future
+    await Promise.all(indexSet.forEach((propertyName) => collection.createIndex({ [propertyName]: 1 })))
   }
 }
