@@ -1,6 +1,6 @@
 {
-  "name": "@boostercloud/framework-types",
-  "version": "0.30.6",
+  "name": "@advantitge/booster-framework-types",
+  "version": "0.30.6-next.9",
   "description": "Contains Booster types related to the information extracted from the user project",
   "keywords": [
     "framework-types"
@@ -9,7 +9,7 @@
   "homepage": "https://booster.cloud",
   "license": "Apache-2.0",
   "publishConfig": {
-    "access": "public"
+    "registry": "https://npm.pkg.github.com"
   },
   "main": "dist/index.js",
   "files": [
@@ -17,7 +17,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/boostercloud/booster.git"
+    "url": "git+https://github.com/advantitge/booster.git"
   },
   "scripts": {
     "format": "prettier --write --ext '.js,.ts' **/*.ts **/*/*.ts",
