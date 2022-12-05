@@ -3,6 +3,7 @@ import {
   BoosterConfig,
   Class,
   EntityInterface,
+  EventDeleteParameters,
   EventSearchParameters,
   EventSearchResponse,
   FilterFor,
@@ -23,6 +24,7 @@ import { BoosterSubscribersNotifier } from './booster-subscribers-notifier'
 import { Importer } from './importer'
 import { EventStore } from './services/event-store'
 import { BoosterRocketDispatcher } from './booster-rocket-dispatcher'
+import { ReadModelStore } from './services/read-model-store'
 import { BoosterEntityMigrated } from './core-concepts/data-migration/events/booster-entity-migrated'
 import { BoosterDataMigrationEntity } from './core-concepts/data-migration/entities/booster-data-migration-entity'
 import { BoosterDataMigrationStarted } from './core-concepts/data-migration/events/booster-data-migration-started'
@@ -154,6 +156,43 @@ export class Booster {
     const eventStore = new EventStore(this.config)
     const entitySnapshotEnvelope = await eventStore.fetchEntitySnapshot(entityClass.name, entityID)
     return entitySnapshotEnvelope ? createInstance(entityClass, entitySnapshotEnvelope.value) : undefined
+  }
+
+  public static async deleteEntity<TEntity extends EntityInterface>(
+    entityClass: Class<TEntity>,
+    entityID: UUID
+  ): Promise<void> {
+    const eventStore = new EventStore(this.config)
+    await eventStore.deleteEntitySnapshots(entityClass.name, entityID)
+  }
+
+  public static async deleteEvents(request: EventDeleteParameters): Promise<void> {
+    await this.config.provider.events.delete(this.config, request)
+  }
+
+  public static async deleteReadModel<TReadModel extends ReadModelInterface>(
+    readModelClass: Class<TReadModel>,
+    id: UUID
+  ): Promise<void> {
+    await this.config.provider.readModels.delete(this.config, readModelClass.name, {
+      id,
+    })
+  }
+
+  public static async replay<TEntity extends EntityInterface>(
+    entityClass: Class<TEntity>,
+    entityID: UUID
+  ): Promise<void> {
+    await Booster.deleteEntity(entityClass, entityID)
+    const events = await this.config.provider.events.forEntitySince(this.config, entityClass.name, entityID)
+    await BoosterEventDispatcher.snapshotAndUpdateReadModels(
+      this.config,
+      entityClass.name,
+      entityID,
+      events,
+      new EventStore(this.config),
+      new ReadModelStore(this.config)
+    )
   }
 
   /**

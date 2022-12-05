@@ -43,6 +43,7 @@ export interface EventSearchRequest extends Envelope {
 }
 
 export type EventSearchParameters = EventParametersFilterByEntity | EventParametersFilterByType
+export type EventDeleteParameters = EventParametersFilterByEntity & Partial<EventParametersFilterByType>
 
 export interface EventLimitParameter {
   limit?: number
@@ -155,9 +156,9 @@ export interface ConnectionDataEnvelope {
 
 export interface UserEnvelope {
   id?: string
-  username: string
-  roles: Array<string>
-  claims: Record<string, unknown>
+  username?: string
+  roles?: Array<string>
+  claims?: Record<string, unknown>
   header?: Record<string, unknown>
 }
 

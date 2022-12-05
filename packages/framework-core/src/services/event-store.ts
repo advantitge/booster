@@ -16,6 +16,12 @@ const originOfTime = new Date(0).toISOString() // Unix epoch
 export class EventStore {
   public constructor(readonly config: BoosterConfig) {}
 
+  public async deleteEntitySnapshots(entityName: string, entityID: UUID): Promise<void> {
+    const logger = getLogger(this.config, 'EventStore#deleteEntitySnapshots')
+    logger.debug(`[EventStore#deleteEntitySnapshots] Deleting snapshots for entity ${entityName} with ID ${entityID}`)
+    return this.config.provider.events.deleteEntitySnapshots(this.config, entityName, entityID)
+  }
+
   public async fetchEntitySnapshot(entityName: string, entityID: UUID): Promise<EventEnvelope | null> {
     const logger = getLogger(this.config, 'EventStore#fetchEntitySnapshot')
     logger.debug(`Fetching snapshot for entity ${entityName} with ID ${entityID}`)
@@ -120,7 +126,11 @@ export class EventStore {
       const snapshotInstance = latestSnapshot ? createInstance(entityMetadata.class, latestSnapshot.value) : null
       let newEntity: any
       try {
-        newEntity = this.reducerForEvent(migratedEventEnvelope.typeName)(eventInstance, snapshotInstance)
+        newEntity = this.reducerForEvent(migratedEventEnvelope.typeName)(
+          eventInstance,
+          snapshotInstance,
+          new Date(eventEnvelope.createdAt)
+        )
       } catch (e) {
         const globalErrorDispatcher = new BoosterGlobalErrorDispatcher(this.config)
         const error = await globalErrorDispatcher.dispatch(new ReducerGlobalError(eventInstance, snapshotInstance, e))

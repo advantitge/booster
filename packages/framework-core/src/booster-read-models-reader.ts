@@ -33,6 +33,10 @@ export class BoosterReadModelsReader {
     if (!key) {
       throw 'Tried to run a findById operation without providing a key. An ID is required to perform this operation.'
     }
+    if (Object.keys(readModelTransformedRequest.filters).length > 0) {
+      // Before hooks have added filters, do not use key.id but use the filters instead
+      return Booster.readModel(readModelMetadata.class).filter(readModelTransformedRequest.filters).searchOne()
+    }
     return Booster.readModel(readModelMetadata.class).findById(key.id, key.sequenceKey)
   }
 

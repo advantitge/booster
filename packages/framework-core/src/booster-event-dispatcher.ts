@@ -29,16 +29,23 @@ export class BoosterEventDispatcher {
       await RawEventsParser.streamPerEntityEvents(
         config,
         rawEvents,
-        BoosterEventDispatcher.eventProcessor(eventStore, readModelStore)
+        BoosterEventDispatcher.eventProcessorSnapshots(eventStore, readModelStore)
+      )
+      await RawEventsParser.streamPerEntityEvents(
+        config,
+        rawEvents,
+        BoosterEventDispatcher.eventProcessorEventHandlers()
       )
     } catch (e) {
       logger.error('Unhandled error while dispatching event: ', e)
     }
   }
 
-  private static eventProcessor(eventStore: EventStore, readModelStore: ReadModelStore): EventsStreamingCallback {
+  private static eventProcessorSnapshots(
+    eventStore: EventStore,
+    readModelStore: ReadModelStore
+  ): EventsStreamingCallback {
     return async (entityName, entityID, eventEnvelopes, config) => {
-      // TODO: Separate into two independent processes the snapshotting/read-model generation process from the event handling process`
       await BoosterEventDispatcher.snapshotAndUpdateReadModels(
         config,
         entityName,
@@ -47,11 +54,16 @@ export class BoosterEventDispatcher {
         eventStore,
         readModelStore
       )
+    }
+  }
+
+  private static eventProcessorEventHandlers(): EventsStreamingCallback {
+    return async (_entityName, _entityID, eventEnvelopes, config) => {
       await BoosterEventDispatcher.dispatchEntityEventsToEventHandlers(eventEnvelopes, config)
     }
   }
 
-  private static async snapshotAndUpdateReadModels(
+  static async snapshotAndUpdateReadModels(
     config: BoosterConfig,
     entityName: string,
     entityID: UUID,

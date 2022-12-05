@@ -70,7 +70,7 @@ export class Searcher<TObject> {
   }
 
   public limit(limit?: number): this {
-    if (limit) this._limit = limit
+    if (limit != null) this._limit = limit
     return this
   }
 

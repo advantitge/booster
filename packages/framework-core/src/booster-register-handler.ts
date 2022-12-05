@@ -50,7 +50,7 @@ export class RegisterHandler {
       superKind: RegisterHandler.getSuperKind(eventTypeName),
       entityID: event.entityID(),
       requestID: register.requestID,
-      currentUser: register.currentUser,
+      currentUser: register.currentUser && { id: register.currentUser.id, claims: register.currentUser.claims },
       entityTypeName: entityTypeName,
       typeName: eventTypeName,
       value: event,
