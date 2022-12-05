@@ -6,8 +6,7 @@ export function sequencedBy(klass: Class<ReadModelInterface>, _functionName: str
   const args = getFunctionArguments(klass)
   const propertyName = args[parameterIndex]
   Booster.configureCurrentEnv((config): void => {
-    if (!config.readModelIndices[klass.name]) config.readModelIndices[klass.name] = []
-    if (config.readModelIndices[klass.name].includes(propertyName)) return
-    config.readModelIndices[klass.name].push(propertyName)
+    if (!config.readModelSequenceKeys[klass.name]) config.readModelSequenceKeys[klass.name] = new Set<string>()
+    config.readModelSequenceKeys[klass.name].add(propertyName)
   })
 }
