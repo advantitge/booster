@@ -1,6 +1,6 @@
-import { Collection, Filter, MongoClient, OptionalUnlessRequiredId } from 'mongodb'
+import { Collection, Document, Filter, MongoClient, OptionalUnlessRequiredId } from 'mongodb'
 
-export class Registry<T> {
+export class Registry<T extends Document> {
   private client: MongoClient
   private collection: Collection<T>
 
