@@ -6,7 +6,16 @@ export function sequencedBy(klass: Class<ReadModelInterface>, _functionName: str
   const args = getFunctionArguments(klass)
   const propertyName = args[parameterIndex]
   Booster.configureCurrentEnv((config): void => {
-    if (!config.readModelSequenceKeys[klass.name]) config.readModelSequenceKeys[klass.name] = new Set<string>()
-    config.readModelSequenceKeys[klass.name].add(propertyName)
+    if (config.readModelSequenceKeys[klass.name] && config.readModelSequenceKeys[klass.name] !== propertyName) {
+      throw new Error(
+        `Error trying to register a sort key named \`${propertyName}\` for class \`${
+          klass.name
+        }\`. It already had the sort key \`${
+          config.readModelSequenceKeys[klass.name]
+        }\` defined and only one sort key is allowed for each read model.`
+      )
+    } else {
+      config.readModelSequenceKeys[klass.name] = propertyName
+    }
   })
 }
