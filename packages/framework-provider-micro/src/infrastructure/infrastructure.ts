@@ -34,6 +34,8 @@ async function indexEventsCollection(config: BoosterConfig): Promise<void> {
 async function indexReadModelsCollections(config: BoosterConfig): Promise<void> {
   for (const [readModelName, indexSet] of Object.entries(config.readModelIndexKeys)) {
     const collection = await getCollection(config.resourceNames.forReadModel(readModelName))
-    await Promise.all(indexSet.forEach((propertyName) => collection.createIndex({ [propertyName]: 1 })))
+    for (const propertyName of indexSet) {
+      await collection.createIndex({ [propertyName]: 1 })
+    }
   }
 }
