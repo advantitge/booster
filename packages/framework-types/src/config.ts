@@ -57,9 +57,8 @@ export class BoosterConfig {
   public readonly commandHandlers: Record<CommandName, CommandMetadata> = {}
   public readonly eventHandlers: Record<EventName, Array<EventHandlerInterface>> = {}
   public readonly readModels: Record<ReadModelName, ReadModelMetadata> = {}
-  public readonly readModelIndices: Record<ReadModelName, PropertyName[]> = {}
   public readonly projections: Record<EntityName, Array<ProjectionMetadata<EntityInterface>>> = {}
-  public readonly readModelSequenceKeys: Record<EntityName, string> = {}
+  public readonly readModelSequenceKeys: Record<EntityName, string[]> = {}
   public readonly roles: Record<RoleName, RoleMetadata> = {}
   public readonly schemaMigrations: Record<ConceptName, Map<Version, SchemaMigrationMetadata>> = {}
   public readonly scheduledCommandHandlers: Record<ScheduledCommandName, ScheduledCommandMetadata> = {}
@@ -215,4 +214,3 @@ type ConceptName = string
 type Version = number
 type ScheduledCommandName = string
 type DataMigrationName = string
-type PropertyName = string
