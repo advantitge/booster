@@ -63,6 +63,8 @@ export const Provider = (rockets?: RocketDescriptor[]): ProviderLibrary => {
       search: searchEvents.bind(null, dynamoDB),
       store: storeEvents.bind(null, dynamoDB),
       searchEntitiesIDs: searchEntitiesIds.bind(null, dynamoDB),
+      deleteEntitySnapshots: undefined as any,
+      delete: undefined as any,
     },
     // ProviderReadModelsLibrary
     readModels: {

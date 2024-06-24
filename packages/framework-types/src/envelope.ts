@@ -43,6 +43,7 @@ export interface EventSearchRequest extends Envelope {
 }
 
 export type EventSearchParameters = EventParametersFilterByEntity | EventParametersFilterByType
+export type EventDeleteParameters = EventParametersFilterByEntity & Partial<EventParametersFilterByType>
 
 export interface EventLimitParameter {
   limit?: number
