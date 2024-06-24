@@ -120,7 +120,11 @@ export class EventStore {
       const snapshotInstance = latestSnapshot ? createInstance(entityMetadata.class, latestSnapshot.value) : null
       let newEntity: any
       try {
-        newEntity = this.reducerForEvent(migratedEventEnvelope.typeName)(eventInstance, snapshotInstance)
+        newEntity = this.reducerForEvent(migratedEventEnvelope.typeName)(
+          eventInstance,
+          snapshotInstance,
+          new Date(eventEnvelope.createdAt)
+        )
       } catch (e) {
         const globalErrorDispatcher = new BoosterGlobalErrorDispatcher(this.config)
         const error = await globalErrorDispatcher.dispatch(new ReducerGlobalError(eventInstance, snapshotInstance, e))
